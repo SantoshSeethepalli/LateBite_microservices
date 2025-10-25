@@ -14,9 +14,9 @@
     </parent>
 
     <groupId>com.backend</groupId>
-    <artifactId>order-services</artifactId>
+    <artifactId>order-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>order-services</name>
+    <name>order-service</name>
     <description>Order Service for Night Canteen Food Ordering Application</description>
 
     <properties>

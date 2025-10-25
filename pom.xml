@@ -12,11 +12,9 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>order-services</module>
+        <module>order-service</module>
         <module>payment-service</module>
         <module>restaurant-service</module>
-        <module>user-service</module>
-        <module>user-service</module>
         <module>user-service</module>
     </modules>
 
