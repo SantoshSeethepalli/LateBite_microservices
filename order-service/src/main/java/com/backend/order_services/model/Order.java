@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "t_order")
 @Data
 @Builder
 @NoArgsConstructor
