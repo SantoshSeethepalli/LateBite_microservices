@@ -16,6 +16,7 @@
         <module>payment-service</module>
         <module>restaurant-service</module>
         <module>user-service</module>
+        <module>cart-service</module>
     </modules>
 
     <properties>
