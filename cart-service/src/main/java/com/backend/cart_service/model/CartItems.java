@@ -1,38 +1,38 @@
-package com.backend.order_services.model;
+package com.backend.cart_service.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
 @Data
+@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItems {
+public class CartItems {
 
     @Id
-    @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private Long orderId;
+    private Long cartId;
 
     @Column(nullable = false)
     private Long itemId;
 
     @Column(nullable = false)
-    private String itemName;
+    private Integer quantity;
 
     @Column(nullable = false)
     private BigDecimal unitPrice;
-
-    @Column(nullable = false)
-    private Integer quantity;
 
     @Column(nullable = false)
     private BigDecimal totalPrice;
@@ -42,4 +42,5 @@ public class OrderItems {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
 }
