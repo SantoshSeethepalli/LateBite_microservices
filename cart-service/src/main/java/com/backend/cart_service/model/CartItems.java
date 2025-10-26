@@ -29,6 +29,9 @@ public class CartItems {
     private Long itemId;
 
     @Column(nullable = false)
+    private String itemName;
+
+    @Column(nullable = false)
     private Integer quantity;
 
     @Column(nullable = false, precision = 10, scale = 2)

@@ -20,6 +20,7 @@ public class Order {
     
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    @Column(name = "order_id")
     private Long id;
 
     @Column(nullable = false)
@@ -35,6 +36,9 @@ public class Order {
     @Column(nullable = false)
     @ColumnDefault("'AWAITING_VERIFICATION'")
     private OrderStatus orderStatus;
+
+    @Column(nullable = false)
+    private String screenShot;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
