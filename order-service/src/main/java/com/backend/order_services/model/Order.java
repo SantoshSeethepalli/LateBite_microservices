@@ -29,7 +29,7 @@ public class Order {
     @Column(nullable = false)
     private Long restaurantId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
