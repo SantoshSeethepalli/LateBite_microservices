@@ -9,11 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "t_order_item")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItems {
+public class OrderItem {
 
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
