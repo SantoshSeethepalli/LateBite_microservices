@@ -3,6 +3,7 @@ package com.backend.order_services.model;
 import com.backend.order_services.model.Enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -32,6 +33,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @ColumnDefault("'AWAITING_VERIFICATION'")
     private OrderStatus orderStatus;
 
     @CreationTimestamp
