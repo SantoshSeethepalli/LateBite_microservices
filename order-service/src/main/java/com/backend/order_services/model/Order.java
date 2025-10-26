@@ -1,14 +1,12 @@
 package com.backend.order_services.model;
 
 import com.backend.order_services.model.Enums.OrderStatus;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-
+    
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private Long id;
