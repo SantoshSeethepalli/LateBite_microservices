@@ -1,5 +1,45 @@
 package com.backend.order_services.model;
 
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderItems {
 
+    @Id
+    @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long orderId;
+
+    @Column(nullable = false)
+    private Long itemId;
+
+    @Column(nullable = false)
+    private String itemName;
+
+    @Column(nullable = false)
+    private BigDecimal unitPrice;
+
+    @Column(nullable = false)
+    private Long quantity;
+
+    @Column(nullable = false)
+    private BigDecimal totalPrice;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
