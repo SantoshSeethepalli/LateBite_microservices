@@ -9,6 +9,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,5 +99,22 @@ public class OrderService {
         }
 
         return responses;
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long restaurantId, Long orderId, String updatedStatus) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("404, Order not found with id: " + orderId));;
+
+        if(!Objects.equals(order.getRestaurantId(), restaurantId)) {
+
+            throw new IllegalArgumentException("401, this order doesnt belongs to this restaurant");
+        }
+
+        order.setOrderStatus(OrderStatus.valueOf(updatedStatus));
+        order.setUpdatedAt(LocalDateTime.now());
+
+        orderRepository.save(order);
     }
 }

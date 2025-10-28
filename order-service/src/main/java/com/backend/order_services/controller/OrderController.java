@@ -16,16 +16,24 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/placeOrder")
+    @PostMapping("/place")
     @ResponseStatus(HttpStatus.CREATED)
     public void placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
 
         orderService.placeOrder(placeOrderRequest);
     }
 
-    @GetMapping("/getMyOrders/{restaurantId}")
+    @GetMapping("/restaurant/{restaurantId}")
+    @ResponseStatus(HttpStatus.OK)
     public List<OrderResponse> getAllOrders(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
 
         return orderService.getAllOrdersOfRestaurant(restaurantId, status);
+    }
+
+    @PatchMapping("/updateStatus/{restaurantId}/{orderId}/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
+
+        orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
     }
 }
