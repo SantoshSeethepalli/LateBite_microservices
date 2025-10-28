@@ -74,9 +74,17 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrdersOfRestaurant(Long restaurantId) {
+    public List<OrderResponse> getAllOrdersOfRestaurant(Long restaurantId, String status) {
 
-        List<Order> orders = orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
+        List<Order> orders;
+
+        if(status != null && !status.isEmpty()) {
+
+            orders = orderRepository.findByRestaurantIdAndOrderStatusOrderByCreatedAtDesc(restaurantId, OrderStatus.valueOf(status));
+        } else {
+
+            orders = orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
+        }
 
         List<OrderResponse> responses = new ArrayList<>();
 
@@ -90,6 +98,4 @@ public class OrderService {
 
         return responses;
     }
-
-
 }

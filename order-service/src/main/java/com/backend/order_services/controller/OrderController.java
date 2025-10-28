@@ -24,8 +24,8 @@ public class OrderController {
     }
 
     @GetMapping("/getMyOrders/{restaurantId}")
-    public List<OrderResponse> getAllOrders(@PathVariable Long restaurantId) {
+    public List<OrderResponse> getAllOrders(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
 
-        return orderService.getAllOrdersOfRestaurant(restaurantId);
+        return orderService.getAllOrdersOfRestaurant(restaurantId, status);
     }
 }
