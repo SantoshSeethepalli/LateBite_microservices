@@ -24,11 +24,11 @@ public class OrderService {
     private final WebClient.Builder webClient;
 
     @Transactional
-    public void placeOrder(PlaceOrderDTO placeOrderDTO) {
+    public void placeOrder(PlaceOrderRequest placeOrderRequest) {
 
         CartDTO cart = webClient.build()
                 .get()
-                .uri("http://localhost:8020/api/cart/getCartDetails?cartId=" + placeOrderDTO.getCartId())
+                .uri("http://localhost:8020/api/cart/getCartDetails?cartId=" + placeOrderRequest.getCartId())
                 .retrieve()
                 .bodyToMono(CartDTO.class)
                 .block();
@@ -42,13 +42,14 @@ public class OrderService {
                 .userId(cart.getUserId())
                 .restaurantId(cart.getRestaurantId())
                 .totalAmount(cart.getTotalAmount())
-                .screenShot(placeOrderDTO.getScreenShot())
+                .screenShot(placeOrderRequest.getScreenShot())
                 .orderStatus(OrderStatus.AWAITING_VERIFICATION)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
         orderRepository.save(newOrder);
+
 
         for(CartItemDTO cartItemDTO : cart.getOrderedItems()) {
 
@@ -68,7 +69,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<Order> getAllOrderOfSpecificRestaurant(Long restaurantId) {
+    public List<Order> getAllOrdersOfRestaurant(Long restaurantId) {
 
         return orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
     }

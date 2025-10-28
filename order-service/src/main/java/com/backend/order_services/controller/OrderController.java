@@ -1,6 +1,6 @@
 package com.backend.order_services.controller;
 
-import com.backend.order_services.dto.PlaceOrderDTO;
+import com.backend.order_services.dto.PlaceOrderRequest;
 import com.backend.order_services.model.Order;
 import com.backend.order_services.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,14 @@ public class OrderController {
 
     @PostMapping("/placeOrder")
     @ResponseStatus(HttpStatus.CREATED)
-    public void placeOrder(@RequestBody PlaceOrderDTO placeOrderDTO) {
+    public void placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
 
-        orderService.placeOrder(placeOrderDTO);
+        orderService.placeOrder(placeOrderRequest);
     }
 
     @GetMapping("/restaurant/orders")
     public List<Order> getAllOrder(@RequestParam Long restaurantId) {
 
-        return orderService.getAllOrderOfSpecificRestaurant(restaurantId);
+        return orderService.getAllOrdersOfRestaurant(restaurantId);
     }
 }

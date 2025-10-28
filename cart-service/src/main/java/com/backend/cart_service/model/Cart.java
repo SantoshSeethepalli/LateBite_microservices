@@ -28,7 +28,7 @@ public class Cart {
     @Column(nullable = false)
     private Long restaurantId;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = falsex, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     @CreationTimestamp

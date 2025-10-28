@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlaceOrderDTO {
+public class PlaceOrderRequest {
 
     private Long cartId;
     private String screenShot;

@@ -16,8 +16,6 @@ public class CartDTO {
 
     // DTO for creating Order
 
-    private Long cartId; // for fetching cart-item
-
     private Long userId;
     private Long restaurantId;
     private BigDecimal totalAmount;
