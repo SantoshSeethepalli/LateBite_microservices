@@ -1,7 +1,7 @@
 package com.backend.order_services.controller;
 
-import com.backend.order_services.dto.PlaceOrderRequest;
-import com.backend.order_services.model.Order;
+import com.backend.order_services.dto.GetAllOrdersDtos.OrderResponse;
+import com.backend.order_services.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,8 +23,8 @@ public class OrderController {
         orderService.placeOrder(placeOrderRequest);
     }
 
-    @GetMapping("/restaurant/orders")
-    public List<Order> getAllOrder(@RequestParam Long restaurantId) {
+    @GetMapping("/getMyOrders/{restaurantId}")
+    public List<OrderResponse> getAllOrders(@PathVariable Long restaurantId) {
 
         return orderService.getAllOrdersOfRestaurant(restaurantId);
     }

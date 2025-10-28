@@ -1,14 +1,19 @@
 package com.backend.order_services.service;
 
+import com.backend.order_services.dto.GetAllOrdersDtos.OrderResponse;
+import com.backend.order_services.dto.PlaceOrderDtos.CartDTO;
+import com.backend.order_services.dto.PlaceOrderDtos.CartItemDTO;
+import com.backend.order_services.dto.PlaceOrderDtos.PlaceOrderRequest;
+import com.backend.order_services.service.Helpers.OrderResponseMapper;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.backend.order_services.dto.*;
 import com.backend.order_services.model.*;
 import com.backend.order_services.model.Enums.OrderStatus;
 import com.backend.order_services.repository.*;
@@ -69,9 +74,22 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<Order> getAllOrdersOfRestaurant(Long restaurantId) {
+    public List<OrderResponse> getAllOrdersOfRestaurant(Long restaurantId) {
 
-        return orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
+        List<Order> orders = orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
+
+        List<OrderResponse> responses = new ArrayList<>();
+
+        for (Order order : orders) {
+
+            List<OrderItem> items = orderItemRepository.findByOrder(order);
+            OrderResponse response = OrderResponseMapper.toOrderResponse(order, items);
+
+            responses.add(response);
+        }
+
+        return responses;
     }
+
 
 }
