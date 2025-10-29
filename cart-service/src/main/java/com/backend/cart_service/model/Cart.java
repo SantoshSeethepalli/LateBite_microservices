@@ -20,6 +20,7 @@ public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cart_id")
     private Long id;
 
     @Column(nullable = false)
@@ -28,7 +29,7 @@ public class Cart {
     @Column(nullable = false)
     private Long restaurantId;
 
-    @Column(nullable = falsex, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     @CreationTimestamp
