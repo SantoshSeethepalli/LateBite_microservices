@@ -32,7 +32,7 @@ public class MenuItem {
     @Column(nullable = false)
     private String itemName;
 
-    private String item_photo;
+    private String itemPhoto;
 
     private String description;
 
