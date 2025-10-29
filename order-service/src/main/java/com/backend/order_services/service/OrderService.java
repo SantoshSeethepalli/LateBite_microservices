@@ -5,12 +5,13 @@ import com.backend.order_services.dto.PlaceOrderDtos.CartDTO;
 import com.backend.order_services.dto.PlaceOrderDtos.CartItemDTO;
 import com.backend.order_services.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.service.Helpers.OrderResponseMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,7 @@ public class OrderService {
 
         if (cart == null || cart.getOrderedItems().isEmpty()) {
 
-            throw new IllegalStateException("Cart is empty or not found");
+            throw new EntityNotFoundException("Cart is empty or not found");
         }
 
         Order newOrder = Order.builder()
@@ -105,16 +106,50 @@ public class OrderService {
     public void updateOrderStatus(Long restaurantId, Long orderId, String updatedStatus) {
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("404, Order not found with id: " + orderId));;
+                .orElseThrow(() -> new EntityNotFoundException("404, Order not found with id: " + orderId));;
 
-        if(!Objects.equals(order.getRestaurantId(), restaurantId)) {
+        if (!Objects.equals(order.getRestaurantId(), restaurantId)) {
 
-            throw new IllegalArgumentException("401, this order doesnt belongs to this restaurant");
+            throw new IllegalStateException("You are not allowed to update this order.");
         }
 
+
+        // Update fields
         order.setOrderStatus(OrderStatus.valueOf(updatedStatus));
         order.setUpdatedAt(LocalDateTime.now());
 
         orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllDeliveredOrdersOfUser(Long userId) {
+
+
+        List<Order> orders = orderRepository.findByUserIdAndOrderStatusOrderByCreatedAtDesc(userId, OrderStatus.DELIVERED);
+        List<OrderResponse> responses = new ArrayList<>();
+
+        for (Order order : orders) {
+
+            List<OrderItem> items = orderItemRepository.findByOrder(order);
+            OrderResponse response = OrderResponseMapper.toOrderResponse(order, items);
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+    @Transactional
+    public void cancelOrder(Long userId, Long orderId) {
+
+        Order orderToBeCancelled = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("404, order not found with id: " + orderId));
+
+        if (!orderToBeCancelled.getUserId().equals(userId)) throw new IllegalStateException("You are not allowed to cancel this order.");
+
+        if(!orderToBeCancelled.getOrderStatus().equals(OrderStatus.AWAITING_VERIFICATION)) throw new IllegalStateException("Cannot cancel the order!");
+
+        orderToBeCancelled.setOrderStatus(OrderStatus.CANCELLED);
+        orderRepository.save(orderToBeCancelled);
     }
 }

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -25,7 +26,7 @@ public class OrderController {
 
     @GetMapping("/restaurant/{restaurantId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<OrderResponse> getAllOrders(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
+    public List<OrderResponse> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
 
         return orderService.getAllOrdersOfRestaurant(restaurantId, status);
     }
@@ -35,5 +36,19 @@ public class OrderController {
     public void updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
 
         orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
+    }
+
+    @GetMapping("/user/{userId")
+    @ResponseStatus(HttpStatus.OK)
+    public List<OrderResponse> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
+
+        return orderService.getAllDeliveredOrdersOfUser(userId);
+    }
+
+    @GetMapping("/{userId}/{orderId}/cancel")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelOrder(@PathVariable Long userId, @PathVariable Long orderId)  {
+
+        orderService.cancelOrder(userId, orderId);
     }
 }
