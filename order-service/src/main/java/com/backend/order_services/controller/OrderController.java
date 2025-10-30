@@ -1,12 +1,13 @@
 package com.backend.order_services.controller;
 
-import com.backend.order_services.dto.PlaceOrderRequest;
-import com.backend.order_services.model.Order;
+import com.backend.order_services.dto.GetAllOrdersDtos.OrderResponse;
+import com.backend.order_services.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -16,16 +17,38 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/placeOrder")
+    @PostMapping("/place")
     @ResponseStatus(HttpStatus.CREATED)
     public void placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
 
         orderService.placeOrder(placeOrderRequest);
     }
 
-    @GetMapping("/restaurant/orders")
-    public List<Order> getAllOrder(@RequestParam Long restaurantId) {
+    @GetMapping("/restaurant/{restaurantId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<OrderResponse> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
 
-        return orderService.getAllOrdersOfRestaurant(restaurantId);
+        return orderService.getAllOrdersOfRestaurant(restaurantId, status);
+    }
+
+    @PatchMapping("/updateStatus/{restaurantId}/{orderId}/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
+
+        orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
+    }
+
+    @GetMapping("/user/{userId")
+    @ResponseStatus(HttpStatus.OK)
+    public List<OrderResponse> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
+
+        return orderService.getAllDeliveredOrdersOfUser(userId);
+    }
+
+    @GetMapping("/{userId}/{orderId}/cancel")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelOrder(@PathVariable Long userId, @PathVariable Long orderId)  {
+
+        orderService.cancelOrder(userId, orderId);
     }
 }
