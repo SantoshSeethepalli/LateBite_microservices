@@ -1,7 +1,7 @@
 package com.backend.cart_service.service;
 
 import com.backend.cart_service.model.Cart;
-import com.backend.cart_service.model.CartItems;
+import com.backend.cart_service.model.CartItem;
 import com.backend.cart_service.respository.CartRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,10 +42,10 @@ public class CartService {
 
     @Transactional
     public Cart recalculateTotal(Cart cart) {
-        List<CartItems> items = cartItemsService.getItemsByCart(cart);
+        List<CartItem> items = cartItemsService.getItemsByCart(cart);
 
         BigDecimal total = items.stream()
-                .map(CartItems::getTotalPrice)
+                .map(CartItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cart.setTotalAmount(total);

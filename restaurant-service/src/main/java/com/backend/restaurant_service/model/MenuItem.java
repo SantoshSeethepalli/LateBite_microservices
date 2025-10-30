@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,7 +36,7 @@ public class MenuItem {
     private String description;
 
     @Column(nullable = false)
-    private BigDecimal price;
+    private BigDecimal unitPrice;
 
     @Column(nullable = false)
     @ColumnDefault("false")
