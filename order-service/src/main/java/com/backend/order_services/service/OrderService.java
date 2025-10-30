@@ -150,6 +150,8 @@ public class OrderService {
         if(!orderToBeCancelled.getOrderStatus().equals(OrderStatus.AWAITING_VERIFICATION)) throw new IllegalStateException("Cannot cancel the order!");
 
         orderToBeCancelled.setOrderStatus(OrderStatus.CANCELLED);
+        orderToBeCancelled.setUpdatedAt(LocalDateTime.now());
+
         orderRepository.save(orderToBeCancelled);
     }
 }
