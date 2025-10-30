@@ -45,4 +45,14 @@ public class MenuItemService {
 
         menuItemRepository.deleteById(menuItemId);
     }
+
+    public void toggleAvailability(Long menuItemId) {
+
+        MenuItem menuItem = menuItemRepository.findById(menuItemId)
+                .orElseThrow(() -> new EntityNotFoundException("No menu-item found with id: " + menuItemId));
+
+        menuItem.setIsAvailable(!menuItem.getIsAvailable());
+
+        menuItemRepository.save(menuItem);
+    }
 }

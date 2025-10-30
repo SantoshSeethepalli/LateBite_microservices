@@ -21,8 +21,16 @@ public class MenuItemController {
     }
 
     @DeleteMapping("/remove/{menuItemId}")
+    @ResponseStatus(HttpStatus.OK)
     public void deleteMenuItem(@PathVariable Long menuItemId) {
 
         menuItemService.deleteMenuItem(menuItemId);
+    }
+
+    @PutMapping("/{menuItemId}/toggle-availability")
+    @ResponseStatus(HttpStatus.OK)
+    public void toggleAvailability(@PathVariable Long menuItemId) {
+
+        menuItemService.toggleAvailability(menuItemId);
     }
 }
