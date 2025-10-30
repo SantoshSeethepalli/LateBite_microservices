@@ -29,10 +29,10 @@ public class MenuItem {
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 
+    private String itemPhoto;
+
     @Column(nullable = false)
     private String itemName;
-
-    private String itemPhoto;
 
     private String description;
 
