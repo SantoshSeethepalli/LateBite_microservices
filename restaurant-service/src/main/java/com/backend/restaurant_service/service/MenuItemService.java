@@ -38,11 +38,10 @@ public class MenuItemService {
 
     public void deleteMenuItem(Long menuItemId) {
 
-        if(!menuItemRepository.existsById(menuItemId)) {
+        MenuItem menuItem = menuItemRepository.findById(menuItemId)
+                        .orElseThrow(() -> new EntityNotFoundException("No menu-item found with id: " + menuItemId));
 
-            throw new EntityNotFoundException("No menu-item found with id: " + menuItemId);
-        }
-
+        menuItem.setUpdatedAt(LocalDateTime.now());
         menuItemRepository.deleteById(menuItemId);
     }
 
@@ -52,6 +51,7 @@ public class MenuItemService {
                 .orElseThrow(() -> new EntityNotFoundException("No menu-item found with id: " + menuItemId));
 
         menuItem.setIsAvailable(!menuItem.getIsAvailable());
+        menuItem.setUpdatedAt(LocalDateTime.now());
 
         menuItemRepository.save(menuItem);
     }
