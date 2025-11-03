@@ -16,14 +16,15 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CartItems {
+public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long cartId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
 
     @Column(nullable = false)
     private Long itemId;
@@ -45,5 +46,6 @@ public class CartItems {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
 
 }
