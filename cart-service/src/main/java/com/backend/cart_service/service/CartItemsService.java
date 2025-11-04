@@ -1,11 +1,13 @@
 package com.backend.cart_service.service;
 
-import com.backend.cart_service.dto.AddItemToCartItemRequest;
-import com.backend.cart_service.dto.RequiredItemDetails;
+import com.backend.cart_service.utils.dto.AddItemToCartItemRequest;
+import com.backend.cart_service.utils.dto.CartItemDTO;
+import com.backend.cart_service.utils.dto.RequiredItemDetails;
 import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.model.CartItem;
 import com.backend.cart_service.respository.CartItemRepository;
 import com.backend.cart_service.respository.CartRepository;
+import com.backend.cart_service.utils.exceptions.exps.ItemsNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -87,5 +90,22 @@ public class CartItemsService {
 
             cartItemRepository.save(cartItem);
         }
+    }
+
+    public void clearCartItems(Cart cart) {
+
+        cartItemRepository.deleteByCart(cart);
+    }
+
+    public List<CartItem> getItemsByCart(Cart cart) {
+
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+
+        if(cartItems.isEmpty()) {
+
+            throw new ItemsNotFoundException("No items found for the given cart");
+        }
+
+        return cartItems;
     }
 }

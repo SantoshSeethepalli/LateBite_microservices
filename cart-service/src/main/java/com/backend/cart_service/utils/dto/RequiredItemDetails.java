@@ -1,4 +1,4 @@
-package com.backend.cart_service.dto;
+package com.backend.cart_service.utils.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

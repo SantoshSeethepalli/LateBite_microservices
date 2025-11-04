@@ -1,4 +1,4 @@
-package com.backend.order_services.utils.dto.PlaceOrderDtos;
+package com.backend.cart_service.utils.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,11 +10,10 @@ import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class CartDTO {
+@NoArgsConstructor
+public class CartDetailsResponse {
 
-    // DTO for creating Order
     private Long userId;
     private Long restaurantId;
     private BigDecimal totalAmount;

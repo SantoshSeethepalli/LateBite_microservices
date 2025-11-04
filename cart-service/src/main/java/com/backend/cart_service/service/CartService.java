@@ -1,9 +1,16 @@
 package com.backend.cart_service.service;
 
+import com.backend.cart_service.utils.Mappers.CartItemToCartItemDTO;
+import com.backend.cart_service.utils.Mappers.CartToCartDetailsResponse;
+import com.backend.cart_service.utils.dto.CartDetailsResponse;
 import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.model.CartItem;
 import com.backend.cart_service.respository.CartRepository;
-import jakarta.transaction.Transactional;
+import com.backend.cart_service.utils.dto.CartItemDTO;
+import com.backend.cart_service.utils.exceptions.exps.CartNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +26,7 @@ public class CartService {
 
     @Transactional
     public Cart createOrGetCart(Long userId, Long restaurantId) {
+
         return cartRepository.findByUserIdAndRestaurantId(userId, restaurantId)
                 .orElseGet(() -> {
                     Cart newCart = Cart.builder()
@@ -41,7 +49,7 @@ public class CartService {
     }
 
     @Transactional
-    public Cart recalculateTotal(Cart cart) {
+    public Cart reCalculateTotal(Cart cart) {
         List<CartItem> items = cartItemsService.getItemsByCart(cart);
 
         BigDecimal total = items.stream()
@@ -64,6 +72,21 @@ public class CartService {
         Cart cart = getCartById(cartId);
         cartItemsService.clearCartItems(cart);
         cartRepository.delete(cart);
+    }
+
+    @Transactional(readOnly = true)
+    public CartDetailsResponse getCompleteCartDetails(Long cartId) {
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("Cart not found with id: " + cartId));
+
+        List<CartItem> cartItemList = cartItemsService.getItemsByCart(cart);
+
+        List<CartItemDTO> orderedItems = cartItemList.stream()
+                .map(CartItemToCartItemDTO::toCartItemDto)
+                .toList();
+
+        return CartToCartDetailsResponse.toCartDto(cart, orderedItems);
     }
 }
 
