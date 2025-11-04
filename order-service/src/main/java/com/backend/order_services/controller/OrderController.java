@@ -21,34 +21,39 @@ public class OrderController {
     public ResponseEntity<Void> placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
 
         orderService.placeOrder(placeOrderRequest);
+
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/restaurant/{restaurantId}")
-    @ResponseStatus(HttpStatus.OK)
-    public List<OrderResponse> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
+    public ResponseEntity<List<OrderResponse>> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
 
-        return orderService.getAllOrdersOfRestaurant(restaurantId, status);
+        List<OrderResponse> responses = orderService.getAllOrdersOfRestaurant(restaurantId, status);
+
+        return ResponseEntity.ok(responses);
     }
 
     @PatchMapping("/updateStatus/{restaurantId}/{orderId}/status")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
+    public ResponseEntity<Void> updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
 
         orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @GetMapping("/user/{userId")
-    @ResponseStatus(HttpStatus.OK)
-    public List<OrderResponse> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
+    public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
 
-        return orderService.getAllDeliveredOrdersOfUser(userId);
+        List<OrderResponse> deliveredOrders = orderService.getAllDeliveredOrdersOfUser(userId);
+
+        return ResponseEntity.ok(deliveredOrders);
     }
 
     @GetMapping("/{userId}/{orderId}/cancel")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelOrder(@PathVariable Long userId, @PathVariable Long orderId)  {
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long userId, @PathVariable Long orderId)  {
 
         orderService.cancelOrder(userId, orderId);
+
+        return ResponseEntity.noContent().build();
     }
 }
