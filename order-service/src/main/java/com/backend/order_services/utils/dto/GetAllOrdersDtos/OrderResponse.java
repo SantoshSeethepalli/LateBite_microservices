@@ -1,4 +1,4 @@
-package com.backend.order_services.dto.GetAllOrdersDtos;
+package com.backend.order_services.utils.dto.GetAllOrdersDtos;
 
 import lombok.*;
 

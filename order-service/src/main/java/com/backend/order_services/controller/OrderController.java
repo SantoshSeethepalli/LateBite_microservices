@@ -1,13 +1,13 @@
 package com.backend.order_services.controller;
 
-import com.backend.order_services.dto.GetAllOrdersDtos.OrderResponse;
-import com.backend.order_services.dto.PlaceOrderDtos.PlaceOrderRequest;
+import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
+import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -18,10 +18,10 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/place")
-    @ResponseStatus(HttpStatus.CREATED)
-    public void placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
+    public ResponseEntity<Void> placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
 
         orderService.placeOrder(placeOrderRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/restaurant/{restaurantId}")

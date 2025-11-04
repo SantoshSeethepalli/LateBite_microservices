@@ -1,4 +1,4 @@
-package com.backend.order_services.dto.PlaceOrderDtos;
+package com.backend.order_services.utils.dto.PlaceOrderDtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

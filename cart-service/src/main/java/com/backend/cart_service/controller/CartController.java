@@ -23,6 +23,4 @@ public class CartController {
         Cart cart = cartService.createOrGetCart(userId, restaurantId);
         return ResponseEntity.ok(cart);
     }
-
-
 }

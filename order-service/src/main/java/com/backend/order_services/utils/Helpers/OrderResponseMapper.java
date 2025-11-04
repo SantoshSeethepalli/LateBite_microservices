@@ -1,7 +1,7 @@
-package com.backend.order_services.service.Helpers;
+package com.backend.order_services.utils.Helpers;
 
-import com.backend.order_services.dto.GetAllOrdersDtos.OrderItemResponse;
-import com.backend.order_services.dto.GetAllOrdersDtos.OrderResponse;
+import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderItemResponse;
+import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.model.Order;
 import com.backend.order_services.model.OrderItem;
 
