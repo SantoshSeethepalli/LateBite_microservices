@@ -4,7 +4,7 @@ import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartItemDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
-import com.backend.order_services.utils.Helpers.OrderResponseMapper;
+import com.backend.order_services.utils.Mapper.OrderResponseMapper;
 import com.backend.order_services.utils.exceptions.exps.AccessDeniedException;
 import com.backend.order_services.utils.exceptions.exps.CartNotFoundException;
 import com.backend.order_services.utils.exceptions.exps.OrderNotFoundException;
@@ -51,37 +51,14 @@ public class OrderService {
                 .block();
 
 
-        if (cart == null || cart.getOrderedItems().isEmpty()) {
+        if (cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
 
-            throw new CartNotFoundException("Cart is empty or not found");
-        }
-
-        Order newOrder = Order.builder()
-                .userId(cart.getUserId())
-                .restaurantId(cart.getRestaurantId())
-                .totalAmount(cart.getTotalAmount())
-                .screenShot(placeOrderRequest.getScreenShot())
-                .orderStatus(OrderStatus.AWAITING_VERIFICATION)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
+        Order newOrder = OrderResponseMapper.toOrder(cart, placeOrderRequest.getScreenShot());
         orderRepository.save(newOrder);
-
 
         for(CartItemDTO cartItemDTO : cart.getOrderedItems()) {
 
-            OrderItem newOrderItem = OrderItem.builder()
-                    .order(newOrder)
-                    .itemId(cartItemDTO.getItemId())
-                    .itemName(cartItemDTO.getItemName())
-                    .quantity(cartItemDTO.getQuantity())
-                    .unitPrice(cartItemDTO.getUnitPrice())
-                    .totalPrice(cartItemDTO.getTotalPrice())
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-
+            OrderItem newOrderItem = OrderResponseMapper.toOrderItem(cartItemDTO, newOrder);
             orderItemRepository.save(newOrderItem);
         }
     }

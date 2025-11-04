@@ -41,7 +41,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping("/user/{userId")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
 
         List<OrderResponse> deliveredOrders = orderService.getAllDeliveredOrdersOfUser(userId);
