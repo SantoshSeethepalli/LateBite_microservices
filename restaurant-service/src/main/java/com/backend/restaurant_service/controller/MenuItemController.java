@@ -1,6 +1,6 @@
 package com.backend.restaurant_service.controller;
 
-import com.backend.restaurant_service.dto.AddMenuItemRequest;
+import com.backend.restaurant_service.utils.dto.AddMenuItemRequest;
 import com.backend.restaurant_service.service.MenuItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
