@@ -1,14 +1,14 @@
 package com.backend.cart_service.service;
 
 import com.backend.cart_service.utils.dto.AddItemToCartItemRequest;
-import com.backend.cart_service.utils.dto.CartItemDTO;
 import com.backend.cart_service.utils.dto.RequiredItemDetails;
 import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.model.CartItem;
 import com.backend.cart_service.respository.CartItemRepository;
 import com.backend.cart_service.respository.CartRepository;
-import com.backend.cart_service.utils.exceptions.exps.ItemsNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
+import com.backend.cart_service.utils.exceptions.exps.CartNotFoundException;
+import com.backend.cart_service.utils.exceptions.exps.CartItemNotFoundException;
+import com.backend.cart_service.utils.exceptions.exps.RestaurantNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,12 +29,8 @@ public class CartItemsService {
     public void addItemToCart(AddItemToCartItemRequest addItemToCartItemRequest) {
 
          Cart cart = cartRepository.findById(addItemToCartItemRequest.getCartId())
-                 .orElseThrow(() -> new EntityNotFoundException("Cart with CartId " + addItemToCartItemRequest.getCartId() + " not found"));
+                 .orElseThrow(() -> new CartNotFoundException("Cart with CartId " + addItemToCartItemRequest.getCartId() + " not found"));
 
-        if (cart == null) {
-
-            throw new EntityNotFoundException("Cart not found");
-        }
 
         RequiredItemDetails requiredItemDetails = webClient.build()
                 .get()
@@ -45,12 +41,12 @@ public class CartItemsService {
 
         if (requiredItemDetails == null) {
 
-            throw new EntityNotFoundException("Item details not found");
+            throw new CartItemNotFoundException("Item details not found");
         }
 
         if(!Objects.equals(cart.getRestaurantId(), requiredItemDetails.getRestaurantId())) {
 
-            throw new EntityNotFoundException("Restuarant with id: " + requiredItemDetails.getRestaurantId() +" not found");
+            throw new RestaurantNotFoundException("Restaurant with id: " + requiredItemDetails.getRestaurantId() +" not found");
         }
 
 
@@ -70,7 +66,7 @@ public class CartItemsService {
     public void updateItemQuantity(Long cartItemId, Boolean increaseQuantity) {
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new EntityNotFoundException("Not found CartItem with id: " + cartItemId ));
+                .orElseThrow(() -> new CartItemNotFoundException("Not found CartItem with id: " + cartItemId ));
 
         Integer valueToBeAdded = (increaseQuantity) ? 1 : -1;
 
@@ -103,7 +99,7 @@ public class CartItemsService {
 
         if(cartItems.isEmpty()) {
 
-            throw new ItemsNotFoundException("No items found for the given cart");
+            throw new CartItemNotFoundException("No items found for the given cart");
         }
 
         return cartItems;

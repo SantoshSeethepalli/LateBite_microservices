@@ -7,10 +7,11 @@ import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.model.CartItem;
 import com.backend.cart_service.respository.CartRepository;
 import com.backend.cart_service.utils.dto.CartItemDTO;
+import com.backend.cart_service.utils.exceptions.exps.CartItemNotFoundException;
 import com.backend.cart_service.utils.exceptions.exps.CartNotFoundException;
+import com.backend.cart_service.utils.exceptions.exps.RestaurantNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -39,40 +40,18 @@ public class CartService {
     }
 
     public Cart getCartById(Long cartId) {
+
         return cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartId));
+                .orElseThrow(() -> new CartNotFoundException("Cart not found with ID: " + cartId));
     }
 
     public Cart getCartByUser(Long userId) {
+
         return cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("No cart found for user ID: " + userId));
+                .orElseThrow(() -> new CartNotFoundException("No cart found for user ID: " + userId));
     }
 
-    @Transactional
-    public Cart reCalculateTotal(Cart cart) {
-        List<CartItem> items = cartItemsService.getItemsByCart(cart);
 
-        BigDecimal total = items.stream()
-                .map(CartItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        cart.setTotalAmount(total);
-        return cartRepository.save(cart);
-    }
-
-    @Transactional
-    public void clearCart(Cart cart) {
-        cartItemsService.clearCartItems(cart);
-        cart.setTotalAmount(BigDecimal.ZERO);
-        cartRepository.save(cart);
-    }
-
-    @Transactional
-    public void deleteCart(Long cartId) {
-        Cart cart = getCartById(cartId);
-        cartItemsService.clearCartItems(cart);
-        cartRepository.delete(cart);
-    }
 
     @Transactional(readOnly = true)
     public CartDetailsResponse getCompleteCartDetails(Long cartId) {
@@ -87,6 +66,42 @@ public class CartService {
                 .toList();
 
         return CartToCartDetailsResponse.toCartDto(cart, orderedItems);
+    }
+
+    @Transactional
+    public Cart reCalculateTotal(Cart cart) {
+
+        List<CartItem> cartItems = cartItemsService.getItemsByCart(cart);
+
+        if(cartItems.isEmpty()) {
+
+            throw new CartItemNotFoundException("Cart no found with id: " + cart.getId());
+        }
+
+        BigDecimal total = cartItems.stream()
+                .map(CartItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotalAmount(total);
+        return cartRepository.save(cart);
+    }
+
+    @Transactional
+    public void clearCart(Cart cart) {
+
+        cartItemsService.clearCartItems(cart);
+
+        cart.setTotalAmount(BigDecimal.ZERO);
+        cartRepository.save(cart);
+    }
+
+    @Transactional
+    public void deleteCart(Long cartId) {
+
+        Cart cart = getCartById(cartId);
+        cartItemsService.clearCartItems(cart);
+
+        cartRepository.delete(cart);
     }
 }
 
