@@ -26,7 +26,6 @@ import com.backend.order_services.model.Enums.OrderStatus;
 import com.backend.order_services.repository.*;
 import reactor.core.publisher.Mono;
 
-
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -49,7 +48,6 @@ public class OrderService {
                         response -> Mono.error(new RuntimeException("Cart service unavailable")))
                 .bodyToMono(CartDTO.class)
                 .block();
-
 
         if (cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
 
