@@ -1,7 +1,10 @@
 package com.backend.order_services.utils.exceptions.exps;
 
-public class AccessDeniedException extends RuntimeException {
+import com.backend.order_services.utils.exceptions.CustomRuntimeException;
+import org.springframework.http.HttpStatus;
+
+public class AccessDeniedException extends CustomRuntimeException {
     public AccessDeniedException(String message) {
-        super(message);
+        super(message, HttpStatus.UNAUTHORIZED);
     }
 }
