@@ -4,6 +4,7 @@ import com.backend.cart_service.utils.dto.CartDetailsResponse;
 import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.service.CartService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,5 +31,7 @@ public class CartController {
     public ResponseEntity<CartDetailsResponse> getCartDetails(@RequestParam Long cartId) {
 
         CartDetailsResponse response = cartService.getCompleteCartDetails(cartId);
+
+        return ResponseEntity.ok(response);
     }
 }
