@@ -98,10 +98,11 @@ public class CartService {
     @Transactional
     public void deleteCart(Long cartId) {
 
-        Cart cart = getCartById(cartId);
-        cartItemsService.clearCartItems(cart);
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("Cart with id: " + cartId + " not found."));
 
-        cartRepository.delete(cart);
+        cartItemsService.deleteByCartId(cart);
+        cartRepository.deleteById(cartId);
     }
 }
 

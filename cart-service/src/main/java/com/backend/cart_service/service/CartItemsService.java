@@ -104,4 +104,9 @@ public class CartItemsService {
 
         return cartItems;
     }
+
+    public void deleteByCartId(Cart cart) {
+
+        cartItemRepository.deleteByCart(cart);
+    }
 }
