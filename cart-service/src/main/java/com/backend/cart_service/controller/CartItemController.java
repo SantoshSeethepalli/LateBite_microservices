@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/cart-item")
+@RequestMapping("/api/cartItem")
 @AllArgsConstructor
 public class CartItemController {
 

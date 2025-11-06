@@ -51,14 +51,16 @@ public class OrderService {
 
         if (cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
 
-        Order newOrder = OrderResponseMapper.toOrder(cart, placeOrderRequest.getScreenShot());
-        orderRepository.save(newOrder);
+        Order savedOrder =
+                orderRepository.saveAndFlush(
+                OrderResponseMapper.toOrder(cart, placeOrderRequest.getScreenShot())
+        );
 
-        for(CartItemDTO cartItemDTO : cart.getOrderedItems()) {
+        List<OrderItem> orderItems = cart.getOrderedItems().stream()
+                .map(item -> OrderResponseMapper.toOrderItem(item, savedOrder))
+                .toList();
 
-            OrderItem newOrderItem = OrderResponseMapper.toOrderItem(cartItemDTO, newOrder);
-            orderItemRepository.save(newOrderItem);
-        }
+        orderItemRepository.saveAll(orderItems);
     }
 
     @Transactional(readOnly = true)
