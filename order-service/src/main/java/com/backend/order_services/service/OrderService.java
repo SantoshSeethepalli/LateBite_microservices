@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    private final Long averageOrderPreparingTime = 7L;
+    private final Long averageItemPreparingTime = 7L;
 
     private final WebClient.Builder webClient;
 
@@ -160,17 +161,22 @@ public class OrderService {
     public Long getEstimatedDeliveryTime(Long orderId) {
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Order with id: + " + orderId + "+ not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
 
         List<Order> activeOrders = orderRepository.findByRestaurantIdAndOrderStatusOrderByCreatedAtAsc(
                 order.getRestaurantId(), OrderStatus.CONFIRMED_AND_PREPARING
         );
 
-        long numberOfOrdersPlacedBeforeCurrentOrder = activeOrders
-                    .stream()
-                    .takeWhile((o) -> !orderId.equals(o.getId()))
-                    .count();
+        List<Order> ordersBeforeIncludingCurrentOrder = activeOrders.stream()
+                .takeWhile(o -> !orderId.equals(o.getId()))
+                .collect(Collectors.toList());
 
-        long estimatedTime = (numberOfOrdersPlacedBeforeCurrentOrder + 1) * averageOrderPreparingTime;
+        ordersBeforeIncludingCurrentOrder.add(order);
+
+        Long totalItemsInQueue = ordersBeforeIncludingCurrentOrder.stream()
+                .mapToLong(orderItemRepository::countByOrder)
+                .sum();
+
+        return totalItemsInQueue * averageItemPreparingTime;
     }
 }
