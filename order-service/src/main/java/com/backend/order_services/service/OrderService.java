@@ -13,10 +13,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -32,6 +34,8 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+
+    private final Long averageOrderPreparingTime = 7L;
 
     private final WebClient.Builder webClient;
 
@@ -76,10 +80,7 @@ public class OrderService {
             orders = orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
         }
 
-        if(orders.isEmpty()) {
-
-            throw new OrderNotFoundException("No orders found for the Restaurant with id: " + restaurantId);
-        }
+        if(orders.isEmpty()) return Collections.emptyList();
 
         List<OrderResponse> responses = new ArrayList<>();
 
@@ -153,5 +154,23 @@ public class OrderService {
         orderToBeCancelled.setUpdatedAt(LocalDateTime.now());
 
         orderRepository.save(orderToBeCancelled);
+    }
+
+    @Transactional(readOnly = true)
+    public Long getEstimatedDeliveryTime(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order with id: + " + orderId + "+ not found"));
+
+        List<Order> activeOrders = orderRepository.findByRestaurantIdAndOrderStatusOrderByCreatedAtAsc(
+                order.getRestaurantId(), OrderStatus.CONFIRMED_AND_PREPARING
+        );
+
+        long numberOfOrdersPlacedBeforeCurrentOrder = activeOrders
+                    .stream()
+                    .takeWhile((o) -> !orderId.equals(o.getId()))
+                    .count();
+
+        long estimatedTime = (numberOfOrdersPlacedBeforeCurrentOrder + 1) * averageOrderPreparingTime;
     }
 }

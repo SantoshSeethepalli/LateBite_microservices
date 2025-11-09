@@ -3,6 +3,7 @@ package com.backend.order_services.controller;
 import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.service.OrderService;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,22 +26,6 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<List<OrderResponse>> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
-
-        List<OrderResponse> responses = orderService.getAllOrdersOfRestaurant(restaurantId, status);
-
-        return ResponseEntity.ok(responses);
-    }
-
-    @PatchMapping("/updateStatus/{restaurantId}/{orderId}/status")
-    public ResponseEntity<Void> updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
-
-        orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
-
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
 
@@ -55,5 +40,29 @@ public class OrderController {
         orderService.cancelOrder(userId, orderId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{orderId}/estimated-time")
+    public ResponseEntity<Long> getEstimatedDeliveryTime(@PathVariable Long orderId, @PathVariable Long restaurantId, @PathVariable Long userId) {
+
+        Long estimatedWaitingTime = orderService.getEstimatedDeliveryTime(userId);
+
+        return ResponseEntity.ok(estimatedWaitingTime);
+    }
+
+    @GetMapping("/restaurant/{restaurantId}")
+    public ResponseEntity<List<OrderResponse>> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
+
+        List<OrderResponse> responses = orderService.getAllOrdersOfRestaurant(restaurantId, status);
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/updateStatus/{restaurantId}/{orderId}/status")
+    public ResponseEntity<Void> updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
+
+        orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
