@@ -30,7 +30,7 @@ public class MenuItemService {
                 .itemPhoto(addMenuItemRequest.getItemPhoto())
                 .itemName(addMenuItemRequest.getItemName())
                 .description(addMenuItemRequest.getDescription())
-                .price(addMenuItemRequest.getPrice())
+                .unitPrice(addMenuItemRequest.getUnitPrice())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

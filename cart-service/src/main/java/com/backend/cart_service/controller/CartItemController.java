@@ -14,6 +14,7 @@ public class CartItemController {
     private final CartItemsService cartItemsService;
 
     @PostMapping("/{cartId}/add-item")
+    @ResponseStatus(HttpStatus.OK)
     public void addItemToCart(@RequestBody AddItemToCartItemRequest addItemToCartItemRequest) {
 
             cartItemsService.addItemToCart(addItemToCartItemRequest);

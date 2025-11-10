@@ -4,7 +4,7 @@ import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartItemDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
-import com.backend.order_services.utils.Helpers.OrderResponseMapper;
+import com.backend.order_services.utils.Mapper.OrderResponseMapper;
 import com.backend.order_services.utils.exceptions.exps.AccessDeniedException;
 import com.backend.order_services.utils.exceptions.exps.CartNotFoundException;
 import com.backend.order_services.utils.exceptions.exps.OrderNotFoundException;
@@ -13,10 +13,13 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,13 +29,14 @@ import com.backend.order_services.model.Enums.OrderStatus;
 import com.backend.order_services.repository.*;
 import reactor.core.publisher.Mono;
 
-
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+
+    private final Long averageItemPreparingTime = 7L;
 
     private final WebClient.Builder webClient;
 
@@ -50,40 +54,18 @@ public class OrderService {
                 .bodyToMono(CartDTO.class)
                 .block();
 
+        if (cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
 
-        if (cart == null || cart.getOrderedItems().isEmpty()) {
+        Order savedOrder =
+                orderRepository.saveAndFlush(
+                OrderResponseMapper.toOrder(cart, placeOrderRequest.getScreenShot())
+        );
 
-            throw new CartNotFoundException("Cart is empty or not found");
-        }
+        List<OrderItem> orderItems = cart.getOrderedItems().stream()
+                .map(item -> OrderResponseMapper.toOrderItem(item, savedOrder))
+                .toList();
 
-        Order newOrder = Order.builder()
-                .userId(cart.getUserId())
-                .restaurantId(cart.getRestaurantId())
-                .totalAmount(cart.getTotalAmount())
-                .screenShot(placeOrderRequest.getScreenShot())
-                .orderStatus(OrderStatus.AWAITING_VERIFICATION)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        orderRepository.save(newOrder);
-
-
-        for(CartItemDTO cartItemDTO : cart.getOrderedItems()) {
-
-            OrderItem newOrderItem = OrderItem.builder()
-                    .order(newOrder)
-                    .itemId(cartItemDTO.getItemId())
-                    .itemName(cartItemDTO.getItemName())
-                    .quantity(cartItemDTO.getQuantity())
-                    .unitPrice(cartItemDTO.getUnitPrice())
-                    .totalPrice(cartItemDTO.getTotalPrice())
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-
-            orderItemRepository.save(newOrderItem);
-        }
+        orderItemRepository.saveAll(orderItems);
     }
 
     @Transactional(readOnly = true)
@@ -99,10 +81,7 @@ public class OrderService {
             orders = orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
         }
 
-        if(orders.isEmpty()) {
-
-            throw new OrderNotFoundException("No orders found for the Restaurant with id: " + restaurantId);
-        }
+        if(orders.isEmpty()) return Collections.emptyList();
 
         List<OrderResponse> responses = new ArrayList<>();
 
@@ -176,5 +155,28 @@ public class OrderService {
         orderToBeCancelled.setUpdatedAt(LocalDateTime.now());
 
         orderRepository.save(orderToBeCancelled);
+    }
+
+    @Transactional(readOnly = true)
+    public Long getEstimatedDeliveryTime(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+
+        List<Order> activeOrders = orderRepository.findByRestaurantIdAndOrderStatusOrderByCreatedAtAsc(
+                order.getRestaurantId(), OrderStatus.CONFIRMED_AND_PREPARING
+        );
+
+        List<Order> ordersBeforeIncludingCurrentOrder = activeOrders.stream()
+                .takeWhile(o -> !orderId.equals(o.getId()))
+                .collect(Collectors.toList());
+
+        ordersBeforeIncludingCurrentOrder.add(order);
+
+        Long totalItemsInQueue = ordersBeforeIncludingCurrentOrder.stream()
+                .mapToLong(orderItemRepository::countByOrder)
+                .sum();
+
+        return totalItemsInQueue * averageItemPreparingTime;
     }
 }

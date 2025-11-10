@@ -49,8 +49,15 @@ public class CartItemsService {
             throw new RestaurantNotFoundException("Restaurant with id: " + requiredItemDetails.getRestaurantId() +" not found");
         }
 
+        cart.setTotalAmount(
+                cart.getTotalAmount().add(
+                        requiredItemDetails.getUnitPrice()
+                ));
+        cart.setUpdatedAt(LocalDateTime.now());
+
 
         CartItem cartItem = CartItem.builder()
+                .cart(cart)
                 .itemId(addItemToCartItemRequest.getItemId())
                 .itemName(requiredItemDetails.getItemName())
                 .quantity(1)
@@ -61,6 +68,7 @@ public class CartItemsService {
                 .build();
 
         cartItemRepository.save(cartItem);
+        cartRepository.save(cart);
     }
 
     public void updateItemQuantity(Long cartItemId, Boolean increaseQuantity) {
@@ -68,24 +76,37 @@ public class CartItemsService {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CartItemNotFoundException("Not found CartItem with id: " + cartItemId ));
 
-        Integer valueToBeAdded = (increaseQuantity) ? 1 : -1;
+        int quantityChange = increaseQuantity ? 1 : -1;
+        int newQuantity = cartItem.getQuantity() + quantityChange;
 
-        cartItem.setQuantity(cartItem.getQuantity() + valueToBeAdded );
+        // When quantity drops to zero, remove the item
+        if (newQuantity <= 0) {
 
-        BigDecimal unitPrice = cartItem.getUnitPrice();
-        Integer quantity = cartItem.getQuantity();
-        BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            Cart cart = cartItem.getCart();
+            BigDecimal amountToBeRemoved = cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
-        cartItem.setTotalPrice(totalAmount);
+            cart.setTotalAmount(cart.getTotalAmount().subtract(amountToBeRemoved));
+            cart.setUpdatedAt(LocalDateTime.now());
+
+            cartItemRepository.delete(cartItem);
+            return;
+        }
+
+        // Update quantity and total price for the item
+        cartItem.setQuantity(newQuantity);
+        cartItem.setTotalPrice(
+                cartItem.getUnitPrice().multiply(BigDecimal.valueOf(newQuantity))
+        );
         cartItem.setUpdatedAt(LocalDateTime.now());
 
-        if(cartItem.getQuantity() <= 0) {
+        // Adjust the cart’s total amount by only the change
+        Cart cart = cartItem.getCart();
+        BigDecimal amountToBeAdded = cartItem.getUnitPrice().multiply(BigDecimal.valueOf(quantityChange));
 
-            cartItemRepository.deleteById(cartItemId);
-        } else {
+        cart.setTotalAmount(cart.getTotalAmount().add(amountToBeAdded));
+        cart.setUpdatedAt(LocalDateTime.now());
 
-            cartItemRepository.save(cartItem);
-        }
+        cartItemRepository.save(cartItem);
     }
 
     public void clearCartItems(Cart cart) {
@@ -103,5 +124,10 @@ public class CartItemsService {
         }
 
         return cartItems;
+    }
+
+    public void deleteByCartId(Cart cart) {
+
+        cartItemRepository.deleteByCart(cart);
     }
 }

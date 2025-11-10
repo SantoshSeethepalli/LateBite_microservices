@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -34,6 +35,8 @@ public class CartService {
                             .userId(userId)
                             .restaurantId(restaurantId)
                             .totalAmount(BigDecimal.ZERO)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
                             .build();
                     return cartRepository.save(newCart);
                 });
@@ -98,10 +101,11 @@ public class CartService {
     @Transactional
     public void deleteCart(Long cartId) {
 
-        Cart cart = getCartById(cartId);
-        cartItemsService.clearCartItems(cart);
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("Cart with id: " + cartId + " not found."));
 
-        cartRepository.delete(cart);
+        cartItemsService.deleteByCartId(cart);
+        cartRepository.deleteById(cartId);
     }
 }
 

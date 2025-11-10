@@ -16,5 +16,5 @@ public class AddMenuItemRequest {
     private String itemPhoto;
     private String itemName;
     private String description;
-    private BigDecimal price;
+    private BigDecimal unitPrice;
 }

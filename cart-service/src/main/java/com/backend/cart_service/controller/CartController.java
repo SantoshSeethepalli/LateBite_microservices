@@ -23,6 +23,7 @@ public class CartController {
     public ResponseEntity<CartDetailsResponse> getCartDetails(@RequestParam Long cartId) {
 
         CartDetailsResponse response = cartService.getCompleteCartDetails(cartId);
+        cartService.deleteCart(cartId);
 
         return ResponseEntity.ok(response);
     }

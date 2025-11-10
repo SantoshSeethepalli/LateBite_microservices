@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 public class CartItemDTO {
 
     // DTO for creating a OrderItem, using CartItems
-
     private Long itemId;
     private Long restaurantId;
     private String itemName;
