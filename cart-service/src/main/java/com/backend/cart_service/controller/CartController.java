@@ -19,14 +19,6 @@ public class CartController {
 
     private final CartService cartService;
 
-    @PostMapping("/create")
-    public ResponseEntity<Cart> createOrGetCart(
-            @RequestParam Long userId,
-            @RequestParam Long restaurantId) {
-        Cart cart = cartService.createOrGetCart(userId, restaurantId);
-        return ResponseEntity.ok(cart);
-    }
-
     @GetMapping("/getCartDetails/cartId")
     public ResponseEntity<CartDetailsResponse> getCartDetails(@RequestParam Long cartId) {
 
