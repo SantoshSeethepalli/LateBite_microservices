@@ -1,19 +1,18 @@
 package com.backend.cart_service.utils.dto;
 
-import com.backend.cart_service.model.Cart;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddItemToCartItemRequest {
+public class ItemToCartItemRequest {
 
     private Long cartId;
+    private Long userId;
+    private Long restaurantId;
     private Long itemId;
 }
