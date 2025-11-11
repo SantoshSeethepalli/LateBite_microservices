@@ -31,6 +31,8 @@ public class PaymentController {
 
         byte[] qrCode = paymentService.generateQr(restaurantUpiId, amount);
 
-        return ResponseEntity.ok(qrCode);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(qrCode);
     }
 }
