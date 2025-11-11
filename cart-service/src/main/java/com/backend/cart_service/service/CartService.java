@@ -1,7 +1,7 @@
 package com.backend.cart_service.service;
 
-import com.backend.cart_service.utils.Mappers.CartItemToCartItemDTO;
-import com.backend.cart_service.utils.Mappers.CartToCartDetailsResponse;
+import com.backend.cart_service.utils.Mappers.CartItemMapper;
+import com.backend.cart_service.utils.Mappers.CartMapper;
 import com.backend.cart_service.utils.dto.CartDetailsResponse;
 import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.model.CartItem;
@@ -9,8 +9,6 @@ import com.backend.cart_service.respository.CartRepository;
 import com.backend.cart_service.utils.dto.CartItemDTO;
 import com.backend.cart_service.utils.exceptions.exps.CartItemNotFoundException;
 import com.backend.cart_service.utils.exceptions.exps.CartNotFoundException;
-import com.backend.cart_service.utils.exceptions.exps.RestaurantNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,19 +25,17 @@ public class CartService {
     private final CartItemsService cartItemsService;
 
     @Transactional
-    public Cart createOrGetCart(Long userId, Long restaurantId) {
+    public Cart createCart(Long userId, Long restaurantId) {
 
-        return cartRepository.findByUserIdAndRestaurantId(userId, restaurantId)
-                .orElseGet(() -> {
-                    Cart newCart = Cart.builder()
-                            .userId(userId)
-                            .restaurantId(restaurantId)
-                            .totalAmount(BigDecimal.ZERO)
-                            .createdAt(LocalDateTime.now())
-                            .updatedAt(LocalDateTime.now())
-                            .build();
-                    return cartRepository.save(newCart);
-                });
+        Cart newCart = Cart.builder()
+                .userId(userId)
+                .restaurantId(restaurantId)
+                .totalAmount(BigDecimal.ZERO)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        return cartRepository.save(newCart);
     }
 
     public Cart getCartById(Long cartId) {
@@ -48,13 +44,11 @@ public class CartService {
                 .orElseThrow(() -> new CartNotFoundException("Cart not found with ID: " + cartId));
     }
 
-    public Cart getCartByUser(Long userId) {
+    public Cart getCartByUserId(Long userId) {
 
         return cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("No cart found for user ID: " + userId));
     }
-
-
 
     @Transactional(readOnly = true)
     public CartDetailsResponse getCompleteCartDetails(Long cartId) {
@@ -65,10 +59,10 @@ public class CartService {
         List<CartItem> cartItemList = cartItemsService.getItemsByCart(cart);
 
         List<CartItemDTO> orderedItems = cartItemList.stream()
-                .map(CartItemToCartItemDTO::toCartItemDto)
+                .map(CartItemMapper::toCartItemDto)
                 .toList();
 
-        return CartToCartDetailsResponse.toCartDto(cart, orderedItems);
+        return CartMapper.toCartDto(cart, orderedItems);
     }
 
     @Transactional
@@ -92,9 +86,11 @@ public class CartService {
     @Transactional
     public void clearCart(Cart cart) {
 
-        cartItemsService.clearCartItems(cart);
+        cartItemsService.deleteByCartId(cart);
 
         cart.setTotalAmount(BigDecimal.ZERO);
+        cart.setUpdatedAt(LocalDateTime.now());
+
         cartRepository.save(cart);
     }
 
