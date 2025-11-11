@@ -40,10 +40,8 @@ public class CartItemsService {
         if (!cart.getRestaurantId().equals(itemToCartItemRequest.getRestaurantId()))
             throw new RestaurantMisMatchException("This cart with id: " + cart.getId() + " belongs to different restaurant");
 
-
         if (!cart.getUserId().equals(itemToCartItemRequest.getUserId()))
             throw new UserAccessDenied("Users with id: " + itemToCartItemRequest.getUserId() + " can't access the cart with id: " + cart.getId());
-
 
         CartItem existingCartItem = cartItemRepository.findByCartIdAndItemId(cart.getId(), itemToCartItemRequest.getItemId());
 

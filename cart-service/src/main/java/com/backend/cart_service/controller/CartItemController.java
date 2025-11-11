@@ -16,7 +16,7 @@ public class CartItemController {
     private final CartItemsService cartItemsService;
 
     @PutMapping("/addOrUpdate")
-    public ResponseEntity<Cart> modifyCartItem(@RequestBody ItemToCartItemRequest request, @RequestParam(defaultValue = "true") boolean increaseQuantity) {
+    public ResponseEntity<Cart> modifyCartItem(@RequestBody ItemToCartItemRequest request, @RequestParam(defaultValue = "true") Boolean increaseQuantity) {
 
         Cart response = cartItemsService.updateItemInCart(request, increaseQuantity);
 
