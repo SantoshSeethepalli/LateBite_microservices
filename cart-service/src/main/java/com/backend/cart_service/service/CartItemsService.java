@@ -1,6 +1,7 @@
 package com.backend.cart_service.service;
 
 import com.backend.cart_service.utils.Mappers.CartItemMapper;
+import com.backend.cart_service.utils.Mappers.CartMapper;
 import com.backend.cart_service.utils.dto.ItemToCartItemRequest;
 import com.backend.cart_service.utils.dto.RequiredItemDetails;
 import com.backend.cart_service.model.Cart;
@@ -26,16 +27,16 @@ public class CartItemsService {
     private final CartRepository cartRepository;
 
     private final WebClient.Builder webClientBuilder;
-    private final CartService cartService;
 
     @Transactional
     public Cart updateItemInCart(ItemToCartItemRequest itemToCartItemRequest, Boolean increaseQuantity) {
 
         Cart cart = cartRepository.findById(itemToCartItemRequest.getCartId())
-                .orElseGet(() -> cartService.createCart(
-                            itemToCartItemRequest.getUserId(), itemToCartItemRequest.getRestaurantId()
-                        )
-                );
+                .orElseGet(() -> {
+                    Cart newCart = CartMapper.createNewCart(itemToCartItemRequest);
+                    return cartRepository.save(newCart);
+                });
+
 
         if (!cart.getRestaurantId().equals(itemToCartItemRequest.getRestaurantId()))
             throw new RestaurantMisMatchException("This cart with id: " + cart.getId() + " belongs to different restaurant");
