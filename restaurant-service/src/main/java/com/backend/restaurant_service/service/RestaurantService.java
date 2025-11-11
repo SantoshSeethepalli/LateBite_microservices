@@ -1,13 +1,16 @@
 package com.backend.restaurant_service.service;
 
 
-import com.backend.restaurant_service.mapper.RestaurantMapper;
+import com.backend.restaurant_service.utils.customComponents.RestaurantMapper;
 import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.repository.RestaurantRepository;
+import com.backend.restaurant_service.utils.Mappers.RestaurantMappers;
+import com.backend.restaurant_service.utils.dto.CreateRestaurantRequest;
 import com.backend.restaurant_service.utils.dto.RestaurantUpdateRequest;
-import jakarta.persistence.EntityNotFoundException;
+import com.backend.restaurant_service.utils.exceptions.exps.RestaurantNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -16,11 +19,19 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantMapper restaurantMapper;
 
+    @Transactional(readOnly = true)
+    public Long createRestaurant(CreateRestaurantRequest request) {
 
+        Restaurant newRestaurant = RestaurantMappers.fromCreateRestaurantRequest(request);
+
+        return newRestaurant.getId();
+    }
+
+    @Transactional
     public void updateSettings(Long id, RestaurantUpdateRequest request) {
 
             Restaurant restaurant = restaurantRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("No restaurant with id :" + id));
+                    .orElseThrow(() -> new RestaurantNotFoundException("No restaurant with id :" + id));
 
             restaurantMapper.updateRestaurantFromDto(request, restaurant);
 

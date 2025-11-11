@@ -24,7 +24,7 @@ public class Restaurant {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String username;
 
     @Column(nullable = false, unique = true)
     private String phoneNumber;

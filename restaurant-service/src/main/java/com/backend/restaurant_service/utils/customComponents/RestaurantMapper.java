@@ -1,4 +1,4 @@
-package com.backend.restaurant_service.mapper;
+package com.backend.restaurant_service.utils.customComponents;
 
 import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.utils.dto.RestaurantUpdateRequest;
