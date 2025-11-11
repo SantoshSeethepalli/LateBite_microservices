@@ -1,7 +1,5 @@
 package com.backend.restaurant_service.controller;
 
-
-import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.service.RestaurantService;
 import com.backend.restaurant_service.utils.dto.CreateRestaurantRequest;
 import com.backend.restaurant_service.utils.dto.RestaurantUpdateRequest;
@@ -26,9 +24,10 @@ public class RestaurantController {
     }
 
     @PatchMapping("/update/{restaurantId}")
-    @ResponseStatus(HttpStatus.OK)
-    public void updateRestaurantSettings(@PathVariable Long restaurantId, @RequestBody RestaurantUpdateRequest request) {
+    public ResponseEntity<Void> updateRestaurantSettings(@PathVariable Long restaurantId, @RequestBody RestaurantUpdateRequest request) {
 
           restaurantService.updateSettings(restaurantId, request);
+
+          return ResponseEntity.ok().build();
     }
 }

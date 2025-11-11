@@ -2,7 +2,6 @@ package com.backend.order_services.service;
 
 import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartDTO;
-import com.backend.order_services.utils.dto.PlaceOrderDtos.CartItemDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.utils.Mapper.OrderResponseMapper;
 import com.backend.order_services.utils.exceptions.exps.AccessDeniedException;
@@ -19,7 +18,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -38,12 +36,12 @@ public class OrderService {
 
     private final Long averageItemPreparingTime = 7L;
 
-    private final WebClient.Builder webClient;
+    private final WebClient.Builder webClientBuilder;
 
     @Transactional
     public void placeOrder(PlaceOrderRequest placeOrderRequest) {
 
-        CartDTO cart = webClient.build()
+        CartDTO cart = webClientBuilder.build()
                 .get()
                 .uri("http://localhost:8020/api/cart/getCartDetails/cartId?cartId=" + placeOrderRequest.getCartId())
                 .retrieve()

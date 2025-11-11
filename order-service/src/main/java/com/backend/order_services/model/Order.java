@@ -37,7 +37,7 @@ public class Order {
     @ColumnDefault("'AWAITING_VERIFICATION'")
     private OrderStatus orderStatus;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private BigDecimal utrNumber;
 
     @CreationTimestamp

@@ -25,7 +25,7 @@ public class CartItemsService {
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
 
-    private final WebClient.Builder webClient;
+    private final WebClient.Builder webClientBuilder;
     private final CartService cartService;
 
     @Transactional
@@ -76,7 +76,7 @@ public class CartItemsService {
 
     private RequiredItemDetails fetchItemDetails(Long itemId) {
 
-        RequiredItemDetails requiredItemDetails = webClient.build()
+        RequiredItemDetails requiredItemDetails = webClientBuilder.build()
                 .get()
                 .uri("http://localhost:8020/api/restaurant/getItemDetails?itemId=" + itemId)
                 .retrieve()
