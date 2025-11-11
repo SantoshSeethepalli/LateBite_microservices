@@ -24,11 +24,13 @@ public class PaymentController {
     PaymentService paymentService;
 
     @GetMapping("/generate-qr")
-    public byte[] getQrByUpiIdAndAmount(
+    public ResponseEntity<byte[]> getQrByUpiIdAndAmount(
                 @RequestParam String restaurantUpiId,
                 @RequestParam BigDecimal amount)
             throws IOException, WriterException {
 
-        return paymentService.generateQr(restaurantUpiId, amount);
+        byte[] qrCode = paymentService.generateQr(restaurantUpiId, amount);
+
+        return ResponseEntity.ok(qrCode);
     }
 }
