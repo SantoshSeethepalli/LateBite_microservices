@@ -58,7 +58,7 @@ public class OrderService {
 
         Order savedOrder =
                 orderRepository.saveAndFlush(
-                OrderResponseMapper.toOrder(cart, placeOrderRequest.getScreenShot())
+                OrderResponseMapper.toOrder(cart, placeOrderRequest.getUtrNumber())
         );
 
         List<OrderItem> orderItems = cart.getOrderedItems().stream()

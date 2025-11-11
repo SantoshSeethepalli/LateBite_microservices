@@ -9,6 +9,7 @@ import com.backend.order_services.utils.dto.PlaceOrderDtos.CartDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartItemDTO;
 import org.springframework.data.domain.Sort;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,20 +41,20 @@ public class OrderResponseMapper {
                 .restaurantId(order.getRestaurantId())
                 .orderStatus(order.getOrderStatus().name())
                 .totalAmount(order.getTotalAmount())
-                .screenShot(order.getScreenShot())
+                .utrNumber(order.getUtrNumber())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .orderItems(itemResponses)
                 .build();
     }
 
-    public static Order toOrder(CartDTO cart, String screenshot) {
+    public static Order toOrder(CartDTO cart, BigDecimal utrNumber) {
 
         return Order.builder()
                 .userId(cart.getUserId())
                 .restaurantId(cart.getRestaurantId())
                 .totalAmount(cart.getTotalAmount())
-                .screenShot(screenshot)
+                .utrNumber(utrNumber)
                 .orderStatus(OrderStatus.AWAITING_VERIFICATION)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())

@@ -38,7 +38,7 @@ public class Order {
     private OrderStatus orderStatus;
 
     @Column(nullable = false)
-    private String screenShot;
+    private BigDecimal utrNumber;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

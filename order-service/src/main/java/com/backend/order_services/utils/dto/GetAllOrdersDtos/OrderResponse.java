@@ -17,7 +17,7 @@ public class OrderResponse {
     private Long restaurantId;
     private String orderStatus;
     private BigDecimal totalAmount;
-    private String screenShot;
+    private BigDecimal utrNumber;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
