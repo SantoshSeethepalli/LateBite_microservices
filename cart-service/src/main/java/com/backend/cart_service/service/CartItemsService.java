@@ -79,7 +79,7 @@ public class CartItemsService {
 
         RequiredItemDetails requiredItemDetails = webClientBuilder.build()
                 .get()
-                .uri("http://localhost:8020/api/restaurant/getItemDetails?itemId=" + itemId)
+                .uri("http://restaurant-service/api/restaurant/getItemDetails?itemId=" + itemId)
                 .retrieve()
                 .bodyToMono(RequiredItemDetails.class)
                 .block();

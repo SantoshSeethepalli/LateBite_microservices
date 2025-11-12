@@ -1,5 +1,6 @@
 package com.backend.restaurant_service.service;
 
+import com.backend.restaurant_service.utils.Mappers.MenuItemMapper;
 import com.backend.restaurant_service.utils.dto.AddMenuItemRequest;
 import com.backend.restaurant_service.model.MenuItem;
 import com.backend.restaurant_service.model.Restaurant;
@@ -25,15 +26,7 @@ public class MenuItemService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException("No restaurant found with id: " + restaurantId));
 
-        MenuItem menuItem = MenuItem.builder()
-                .restaurant(restaurant)
-                .itemPhoto(addMenuItemRequest.getItemPhoto())
-                .itemName(addMenuItemRequest.getItemName())
-                .description(addMenuItemRequest.getDescription())
-                .unitPrice(addMenuItemRequest.getUnitPrice())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        MenuItem menuItem = MenuItemMapper.fromMenuItemRequest(addMenuItemRequest, restaurant);
 
         menuItemRepository.save(menuItem);
     }

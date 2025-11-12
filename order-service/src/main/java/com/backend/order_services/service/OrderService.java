@@ -43,7 +43,7 @@ public class OrderService {
 
         CartDTO cart = webClientBuilder.build()
                 .get()
-                .uri("http://localhost:8020/api/cart/getCartDetails/cartId?cartId=" + placeOrderRequest.getCartId())
+                .uri("http://cart-service/api/cart/getCartDetails/cartId?cartId=" + placeOrderRequest.getCartId())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
                         response -> Mono.error(new CartNotFoundException("Cart not found or invalid cart ID")))
