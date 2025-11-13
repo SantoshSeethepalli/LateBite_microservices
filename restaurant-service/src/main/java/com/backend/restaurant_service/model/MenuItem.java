@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "t_menu_item")
 @Data
 @Builder
 @NoArgsConstructor
