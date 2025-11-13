@@ -31,6 +31,8 @@ public class Restaurant {
     @Column(nullable = false, unique = true)
     private String upiId;
 
+    private String profilePhoto;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

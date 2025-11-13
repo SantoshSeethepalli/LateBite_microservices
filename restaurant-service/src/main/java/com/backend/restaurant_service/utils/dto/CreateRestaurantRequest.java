@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class CreateRestaurantRequest {
 
     private String username;
+    private String profilePhoto;
     private String phoneNumber;
     private String upiId;
 }

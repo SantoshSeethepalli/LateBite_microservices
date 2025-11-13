@@ -3,6 +3,10 @@ package com.backend.auth_services.service;
 import com.backend.auth_services.model.*;
 import com.backend.auth_services.repository.*;
 import com.backend.auth_services.security.JwtUtil;
+import com.backend.auth_services.utils.dtos.CompleteProfileRequest;
+import com.backend.auth_services.utils.dtos.CreateRestaurantRequest;
+import com.backend.auth_services.utils.dtos.CreateUserRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -11,7 +15,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,6 +26,8 @@ public class AuthFlowService {
     private final OtpService otpService;
     private final TwilioService sms;
     private final JwtUtil jwt;
+    private final ObjectMapper objectMapper;
+
 
     @Value("${jwt.refresh-exp-days}")
     private int refreshDays;
@@ -33,7 +38,9 @@ public class AuthFlowService {
     @Value("${service.restaurant.base-url}")
     private String restaurantService;
 
-    private final WebClient.Builder webClient;
+    private final WebClient.Builder webClientBuilder;
+
+    // SEND OTP -------------------------------------------------------------
 
     public Map<String, Object> sendOtp(Map<String, String> req) {
 
@@ -53,6 +60,10 @@ public class AuthFlowService {
         return Map.of("status", "otp_sent");
     }
 
+
+
+    // VERIFY OTP -------------------------------------------------------------
+
     public Map<String, Object> verifyOtp(Map<String, String> req) {
 
         String phone = req.get("phone");
@@ -67,7 +78,9 @@ public class AuthFlowService {
 
         otpService.deleteOtp(phone, role.name());
 
-        if (user.getStatus() == Status.NEW) {
+        // User still needs to fill profile details
+        if (user.getStatus() == Status.NEW || user.getStatus() == Status.PENDING_VERIFIED) {
+
             user.setStatus(Status.PENDING_VERIFIED);
             authRepo.save(user);
 
@@ -79,17 +92,12 @@ public class AuthFlowService {
             );
         }
 
-        if (user.getStatus() == Status.PENDING_VERIFIED) {
-            return Map.of(
-                    "detailsRequired", true,
-                    "authUserId", user.getId(),
-                    "phone", user.getPhoneNumber(),
-                    "role", user.getRole().name()
-            );
-        }
-
+        // User already completed profile => generate tokens
         String access = jwt.generateAccessToken(
-                user.getId(), user.getReferenceId(), role.name(), phone
+                user.getId(),
+                user.getReferenceId(),
+                role.name(),
+                phone
         );
 
         String refreshRaw = createRefresh(user.getId());
@@ -103,36 +111,45 @@ public class AuthFlowService {
         );
     }
 
-    public Map<String, Object> completeProfile(Map<String, Object> req) {
 
-        Long authUserId = Long.valueOf(String.valueOf(req.get("authUserId")));
-        Map<String, Object> payload = (Map<String, Object>) req.get("payload");
 
-        AuthUser user = authRepo.findById(authUserId)
-                .orElseThrow();
+    // COMPLETE PROFILE -------------------------------------------------------------
+
+    public Map<String, Object> completeProfile(CompleteProfileRequest req) {
+
+        Long authUserId = req.getAuthUserId();
+        AuthUser user = authRepo.findById(authUserId).orElseThrow();
 
         Long refId;
 
         if (user.getRole() == Role.USER) {
 
-            refId = webClient.build()
+            CreateUserRequest dto =
+                    objectMapper.convertValue(req.getPayload(), CreateUserRequest.class);
+
+            dto.setPhoneNumber(user.getPhoneNumber());
+
+            refId = webClientBuilder.build()
                     .post()
                     .uri(userService + "/api/user/create")
-                    .bodyValue(payload)
+                    .bodyValue(dto)
                     .retrieve()
-                    .bodyToMono(Map.class)
-                    .map(m -> Long.valueOf(String.valueOf(m.get("id"))))
+                    .bodyToMono(Long.class)
                     .block();
+        }
+        else {
 
-        } else {
+            CreateRestaurantRequest dto =
+                    objectMapper.convertValue(req.getPayload(), CreateRestaurantRequest.class);
 
-            refId = webClient.build()
+            dto.setPhoneNumber(user.getPhoneNumber());
+
+            refId = webClientBuilder.build()
                     .post()
                     .uri(restaurantService + "/api/restaurant/create")
-                    .bodyValue(payload)
+                    .bodyValue(dto)
                     .retrieve()
-                    .bodyToMono(Map.class)
-                    .map(m -> Long.valueOf(String.valueOf(m.get("id"))))
+                    .bodyToMono(Long.class)
                     .block();
         }
 
@@ -141,10 +158,7 @@ public class AuthFlowService {
         authRepo.save(user);
 
         String access = jwt.generateAccessToken(
-                user.getId(),
-                refId,
-                user.getRole().name(),
-                user.getPhoneNumber()
+                user.getId(), refId, user.getRole().name(), user.getPhoneNumber()
         );
 
         String refresh = createRefresh(user.getId());
@@ -157,13 +171,19 @@ public class AuthFlowService {
         );
     }
 
+
+
+
+    // RENEW TOKEN -------------------------------------------------------------
+
     public Map<String, Object> renew(Map<String, String> req) {
 
         Long authUserId = Long.valueOf(req.get("authUserId"));
         String raw = req.get("refreshToken");
 
         RefreshToken stored = refreshRepo.findByAuthUserId(authUserId).orElse(null);
-        if (stored == null) return Map.of("error", "invalid_refresh");
+        if (stored == null)
+            return Map.of("error", "invalid_refresh");
 
         if (stored.getExpiresAt() < Instant.now().getEpochSecond())
             return Map.of("error", "expired_refresh");
@@ -188,6 +208,10 @@ public class AuthFlowService {
         );
     }
 
+
+
+    // LOGOUT -------------------------------------------------------------
+
     public Map<String, Object> logout(Map<String, String> req) {
 
         Long authUserId = Long.valueOf(req.get("authUserId"));
@@ -195,6 +219,10 @@ public class AuthFlowService {
 
         return Map.of("status", "logged_out");
     }
+
+
+
+    // REFRESH TOKEN GENERATOR -------------------------------------------------------------
 
     private String createRefresh(Long authUserId) {
 

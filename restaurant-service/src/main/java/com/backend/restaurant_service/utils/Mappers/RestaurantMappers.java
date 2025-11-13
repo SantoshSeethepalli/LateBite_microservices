@@ -13,6 +13,7 @@ public class RestaurantMappers {
                 .username(request.getUsername())
                 .phoneNumber(request.getPhoneNumber())
                 .upiId(request.getUpiId())
+                .profilePhoto(request.getProfilePhoto())
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();

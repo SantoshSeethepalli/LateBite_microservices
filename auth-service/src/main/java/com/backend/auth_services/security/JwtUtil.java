@@ -1,6 +1,7 @@
 package com.backend.auth_services.security;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class JwtUtil {
 
     public String generateAccessToken(Long authUserId, Long refId, String role, String phone) {
         long now = System.currentTimeMillis();
+
         return Jwts.builder()
                 .setSubject(String.valueOf(authUserId))
                 .claim("refId", refId)
@@ -24,11 +26,15 @@ public class JwtUtil {
                 .claim("phone", phone)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + exp))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Claims validate(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

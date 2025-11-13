@@ -2,6 +2,7 @@ package com.backend.auth_services.controller;
 
 import com.backend.auth_services.model.Role;
 import com.backend.auth_services.service.AuthFlowService;
+import com.backend.auth_services.utils.dtos.CompleteProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/complete_profile")
-    public ResponseEntity<?> complete(@RequestBody Map<String, Object> req) {
+    public ResponseEntity<?> complete(@RequestBody CompleteProfileRequest req) {
         return ResponseEntity.ok(service.completeProfile(req));
     }
 

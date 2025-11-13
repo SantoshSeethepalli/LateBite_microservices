@@ -12,6 +12,7 @@ public class UserMapper {
         return User.builder()
                 .username(request.getUsername())
                 .phoneNumber(request.getPhoneNumber())
+                .profilePhoto(request.getProfilePhoto())
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();

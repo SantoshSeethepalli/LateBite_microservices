@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -17,8 +19,13 @@ public class UserService {
     @Transactional
     public Long createUser(CreateUserRequest request) {
 
-        User newUser = userRepository.save(UserMapper.fromCreateUserRequest(request));
+            // check existing by phone
+            Optional<User> existing = userRepository.findByPhoneNumber(request.getPhoneNumber());
+            if (existing.isPresent()) {
+                return existing.get().getId();
+            }
 
-        return newUser.getId();
-    }
+            User saved = userRepository.save(UserMapper.fromCreateUserRequest(request));
+            return saved.getId();
+        }
 }
