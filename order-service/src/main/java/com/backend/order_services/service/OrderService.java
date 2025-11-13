@@ -39,7 +39,7 @@ public class OrderService {
     private final WebClient.Builder webClientBuilder;
 
     @Transactional
-    public void placeOrder(PlaceOrderRequest placeOrderRequest) {
+    public void placeOrder(Long userId, PlaceOrderRequest placeOrderRequest) {
 
         CartDTO cart = webClientBuilder.build()
                 .get()
@@ -52,7 +52,9 @@ public class OrderService {
                 .bodyToMono(CartDTO.class)
                 .block();
 
-        if (cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
+        if(!cart.getUserId().equals(userId)) throw new AccessDeniedException("You can't handle this cart");
+
+        if(cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
 
         Order savedOrder =
                 orderRepository.saveAndFlush(
@@ -156,10 +158,12 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Long getEstimatedDeliveryTime(Long orderId) {
+    public Long getEstimatedDeliveryTime(Long orderId, Long userId) {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+
+        if(!order.getUserId().equals(userId)) throw new AccessDeniedException("This is not you order");
 
         List<Order> activeOrders = orderRepository.findByRestaurantIdAndOrderStatusOrderByCreatedAtAsc(
                 order.getRestaurantId(), OrderStatus.CONFIRMED_AND_PREPARING

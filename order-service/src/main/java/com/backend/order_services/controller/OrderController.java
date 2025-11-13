@@ -19,47 +19,76 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/place")
-    public ResponseEntity<Void> placeOrder(@RequestBody PlaceOrderRequest placeOrderRequest) {
+    public ResponseEntity<Void> placeOrder(
+            @RequestHeader("X-Ref-Id") Long userId,
+            @RequestHeader("X-Role") String role,
+            @RequestBody PlaceOrderRequest placeOrderRequest
+    ) {
+        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        orderService.placeOrder(placeOrderRequest);
+        orderService.placeOrder(userId, placeOrderRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@PathVariable Long userId) {
+    @GetMapping("/pastOrders")
+    public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@RequestHeader("X-Ref-Id") Long userId, @RequestHeader("X-Role") String role) {
+
+        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         List<OrderResponse> deliveredOrders = orderService.getAllDeliveredOrdersOfUser(userId);
 
         return ResponseEntity.ok(deliveredOrders);
     }
 
-    @GetMapping("/{userId}/{orderId}/cancel")
-    public ResponseEntity<Void> cancelOrder(@PathVariable Long userId, @PathVariable Long orderId)  {
+    @GetMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(@RequestHeader("X-Ref-Id") Long currentUserId, @PathVariable Long orderId, @RequestHeader("X-Role") String role) {
 
-        orderService.cancelOrder(userId, orderId);
+        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        orderService.cancelOrder(currentUserId, orderId);
 
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{orderId}/estimated-time")
-    public ResponseEntity<Long> getEstimatedDeliveryTime(@PathVariable Long orderId, @PathVariable Long restaurantId, @PathVariable Long userId) {
 
-        Long estimatedWaitingTime = orderService.getEstimatedDeliveryTime(userId);
+    @GetMapping("/{orderId}/estimated-time")
+    public ResponseEntity<Long> getEstimatedDeliveryTime(@PathVariable Long orderId,
+                                                         @RequestHeader("X-Ref-Id") Long userId, @RequestHeader("X-Role") String role) {
+
+        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        Long estimatedWaitingTime = orderService.getEstimatedDeliveryTime(orderId, userId);
 
         return ResponseEntity.ok(estimatedWaitingTime);
     }
 
     @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<List<OrderResponse>> getAllOrdersOfRestaurant(@PathVariable Long restaurantId, @RequestParam(required = false) String status) {
+    public ResponseEntity<List<OrderResponse>> getAllOrdersOfRestaurant(
+            @PathVariable Long restaurantId,
+            @RequestHeader("X-Ref-Id") Long refId,
+            @RequestHeader("X-Role") String role,
+            @RequestParam(required = false) String status
+    ) {
+
+        if (!role.equals("RESTAURANT")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        if (!restaurantId.equals(refId)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         List<OrderResponse> responses = orderService.getAllOrdersOfRestaurant(restaurantId, status);
 
         return ResponseEntity.ok(responses);
     }
 
-    @PatchMapping("/updateStatus/restaurant/{restaurantId}/order/{orderId}/status")
-    public ResponseEntity<Void> updateOrderStatus(@PathVariable Long restaurantId, @PathVariable Long orderId, @RequestParam String updatedStatus) {
+    @PatchMapping("/{orderId}/updateStatus")
+    public ResponseEntity<Void> updateOrderStatus(
+            @RequestHeader("X-Ref-Id") Long restaurantId,
+            @RequestHeader("X-Role") String role,
+            @PathVariable Long orderId,
+            @RequestParam String updatedStatus
+    ) {
+
+        if (!role.equals("RESTAURANT")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
 

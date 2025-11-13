@@ -9,7 +9,6 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class LoadBalancerConfig {
 
-    // ✅ This makes the Gateway’s RestClient understand lb:// URIs
     @Bean
     @LoadBalanced
     @ConditionalOnMissingBean
