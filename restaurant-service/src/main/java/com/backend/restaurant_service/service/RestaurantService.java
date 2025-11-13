@@ -19,10 +19,10 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantMapper restaurantMapper;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Long createRestaurant(CreateRestaurantRequest request) {
 
-        Restaurant newRestaurant = RestaurantMappers.fromCreateRestaurantRequest(request);
+        Restaurant newRestaurant = restaurantRepository.save(RestaurantMappers.fromCreateRestaurantRequest(request));
 
         return newRestaurant.getId();
     }

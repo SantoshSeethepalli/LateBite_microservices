@@ -16,6 +16,7 @@ public class MenuItemMapper {
                 .itemName(request.getItemName())
                 .description(request.getDescription())
                 .unitPrice(request.getUnitPrice())
+                .isAvailable(false)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
