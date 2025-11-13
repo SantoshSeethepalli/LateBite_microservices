@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "t_order_item")
 @Data
 @Builder
 @NoArgsConstructor
