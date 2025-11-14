@@ -71,9 +71,9 @@ public class ApiGatewayConfig {
     @Bean
     public RouterFunction<?> orderServiceRoute() {
         return GatewayRouterFunctions.route("order-service")
-                .filter(jwtFilter)
                 .route(path("/api/order/**"),
                         HandlerFunctions.http("lb://ORDER-SERVICE"))
+                .filter(jwtFilter)
                 .build();
     }
 

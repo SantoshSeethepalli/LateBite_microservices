@@ -1,14 +1,15 @@
-package com.backend.auth_services.service;
+// TwilioSmsProvider.java
+package com.backend.auth_services.service.sms.providers;
 
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
-public class TwilioService {
+public class TwilioSmsProvider implements SmsProvider {
 
     @Value("${twilio.account-sid}")
     private String sid;
@@ -19,6 +20,7 @@ public class TwilioService {
     @Value("${twilio.from-number}")
     private String from;
 
+    @Override
     public void sendSms(String to, String body) {
         Twilio.init(sid, token);
         Message.creator(

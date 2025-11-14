@@ -3,6 +3,7 @@ package com.backend.auth_services.service;
 import com.backend.auth_services.model.*;
 import com.backend.auth_services.repository.*;
 import com.backend.auth_services.security.JwtUtil;
+import com.backend.auth_services.service.sms.SmsService;
 import com.backend.auth_services.utils.dtos.CompleteProfileRequest;
 import com.backend.auth_services.utils.dtos.CreateRestaurantRequest;
 import com.backend.auth_services.utils.dtos.CreateUserRequest;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Instant;
@@ -21,10 +23,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthFlowService {
 
-    private final AuthUserRepository authRepo;
-    private final RefreshTokenRepository refreshRepo;
+    private final AuthUserRepository authRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final OtpService otpService;
-    private final TwilioService sms;
+    private final SmsService smsService;
     private final JwtUtil jwt;
     private final ObjectMapper objectMapper;
 
@@ -47,15 +49,15 @@ public class AuthFlowService {
         String phone = req.get("phone");
         Role role = Role.valueOf(req.get("role"));
 
-        AuthUser user = authRepo.findByPhoneNumberAndRole(phone, role)
-                .orElseGet(() -> authRepo.save(AuthUser.builder()
+        AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
+                .orElseGet(() -> authRepository.save(AuthUser.builder()
                         .phoneNumber(phone)
                         .role(role)
                         .status(Status.NEW)
                         .build()));
 
         String otp = otpService.generateOtp(phone, role.name());
-        sms.sendSms("+91" + phone, "Your OTP is: " + otp);
+        smsService.sendSms("+91" + phone, "Your OTP is: " + otp);
 
         return Map.of("status", "otp_sent");
     }
@@ -64,6 +66,7 @@ public class AuthFlowService {
 
     // VERIFY OTP -------------------------------------------------------------
 
+    @Transactional
     public Map<String, Object> verifyOtp(Map<String, String> req) {
 
         String phone = req.get("phone");
@@ -73,7 +76,7 @@ public class AuthFlowService {
         if (!otpService.verifyOtp(phone, role.name(), otp))
             return Map.of("error", "invalid_otp");
 
-        AuthUser user = authRepo.findByPhoneNumberAndRole(phone, role)
+        AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
                 .orElseThrow();
 
         otpService.deleteOtp(phone, role.name());
@@ -82,7 +85,7 @@ public class AuthFlowService {
         if (user.getStatus() == Status.NEW || user.getStatus() == Status.PENDING_VERIFIED) {
 
             user.setStatus(Status.PENDING_VERIFIED);
-            authRepo.save(user);
+            authRepository.save(user);
 
             return Map.of(
                     "detailsRequired", true,
@@ -115,10 +118,11 @@ public class AuthFlowService {
 
     // COMPLETE PROFILE -------------------------------------------------------------
 
+    @Transactional
     public Map<String, Object> completeProfile(CompleteProfileRequest req) {
 
         Long authUserId = req.getAuthUserId();
-        AuthUser user = authRepo.findById(authUserId).orElseThrow();
+        AuthUser user = authRepository.findById(authUserId).orElseThrow();
 
         Long refId;
 
@@ -155,7 +159,7 @@ public class AuthFlowService {
 
         user.setReferenceId(refId);
         user.setStatus(Status.ACTIVE);
-        authRepo.save(user);
+        authRepository.save(user);
 
         String access = jwt.generateAccessToken(
                 user.getId(), refId, user.getRole().name(), user.getPhoneNumber()
@@ -181,7 +185,7 @@ public class AuthFlowService {
         Long authUserId = Long.valueOf(req.get("authUserId"));
         String raw = req.get("refreshToken");
 
-        RefreshToken stored = refreshRepo.findByAuthUserId(authUserId).orElse(null);
+        RefreshToken stored = refreshTokenRepository.findByAuthUserId(authUserId).orElse(null);
         if (stored == null)
             return Map.of("error", "invalid_refresh");
 
@@ -191,7 +195,7 @@ public class AuthFlowService {
         if (!BCrypt.checkpw(raw, stored.getRefreshTokenHash()))
             return Map.of("error", "invalid_refresh");
 
-        AuthUser user = authRepo.findById(authUserId).orElseThrow();
+        AuthUser user = authRepository.findById(authUserId).orElseThrow();
 
         String access = jwt.generateAccessToken(
                 user.getId(),
@@ -215,7 +219,7 @@ public class AuthFlowService {
     public Map<String, Object> logout(Map<String, String> req) {
 
         Long authUserId = Long.valueOf(req.get("authUserId"));
-        refreshRepo.deleteByAuthUserId(authUserId);
+        refreshTokenRepository.deleteByAuthUserId(authUserId);
 
         return Map.of("status", "logged_out");
     }
@@ -229,7 +233,7 @@ public class AuthFlowService {
         String raw = UUID.randomUUID() + "-" + UUID.randomUUID();
         String hash = BCrypt.hashpw(raw, BCrypt.gensalt());
 
-        refreshRepo.deleteByAuthUserId(authUserId);
+        refreshTokenRepository.deleteByAuthUserId(authUserId);
 
         RefreshToken token = RefreshToken.builder()
                 .authUserId(authUserId)
@@ -237,7 +241,7 @@ public class AuthFlowService {
                 .expiresAt(Instant.now().plusSeconds(refreshDays * 86400L).getEpochSecond())
                 .build();
 
-        refreshRepo.save(token);
+        refreshTokenRepository.save(token);
 
         return raw;
     }

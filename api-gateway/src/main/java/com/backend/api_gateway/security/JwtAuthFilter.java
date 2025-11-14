@@ -35,32 +35,25 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
     }
 
     @Override
-    public ServerResponse filter(
-            @NonNull ServerRequest request,
-            @NonNull HandlerFunction<ServerResponse> next
-    ) throws Exception {
+    public ServerResponse filter(ServerRequest request, HandlerFunction<ServerResponse> next) throws Exception {
 
         String path = request.uri().getPath();
 
-        if (isPublic(path)) {
-            return next.handle(request);
+        if (isPublic(path)) return next.handle(request);
+
+        String auth = request.headers().firstHeader("Authorization");
+
+        if (auth == null || !auth.startsWith("Bearer ")) {
+            return ServerResponse.status(401).body("Missing or invalid Authorization header");
         }
-
-        String authHeader = request.headers().firstHeader("Authorization");
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ServerResponse.status(HttpStatus.UNAUTHORIZED)
-                    .body("Missing or invalid Authorization header");
-        }
-
-        String token = authHeader.substring(7);
 
         try {
+            String token = auth.substring(7);
             var claims = jwtUtil.validateToken(token);
 
             ServerRequest mutated = ServerRequest.from(request)
-                    .header("X-Auth-UserId", claims.getSubject())
-                    .header("X-Reference-Id", claims.get("refId").toString())
+                    .header("X-User-Id", claims.getSubject())
+                    .header("X-Ref-Id", claims.get("refId").toString())
                     .header("X-Role", claims.get("role").toString())
                     .header("X-Phone", claims.get("phone").toString())
                     .build();
@@ -68,8 +61,8 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
             return next.handle(mutated);
 
         } catch (Exception e) {
-            return ServerResponse.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid or expired token");
+            return ServerResponse.status(401).body("Invalid or expired token");
         }
     }
+
 }

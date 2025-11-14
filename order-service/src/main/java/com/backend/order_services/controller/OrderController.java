@@ -34,7 +34,7 @@ public class OrderController {
     @GetMapping("/pastOrders")
     public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@RequestHeader("X-Ref-Id") Long userId, @RequestHeader("X-Role") String role) {
 
-        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (role == null || !role.equalsIgnoreCase("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         List<OrderResponse> deliveredOrders = orderService.getAllDeliveredOrdersOfUser(userId);
 
