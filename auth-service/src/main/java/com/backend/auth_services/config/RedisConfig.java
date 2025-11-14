@@ -15,8 +15,10 @@ public class RedisConfig {
 
     @Bean(name = "redisTemplate")
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory cf) {
+
         RedisTemplate<String, String> t = new RedisTemplate<>();
         t.setConnectionFactory(cf);
+
         return t;
     }
 }

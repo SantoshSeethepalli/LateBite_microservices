@@ -17,15 +17,20 @@ public class OtpService {
     }
 
     public String generateOtp(String phone, String role) {
+
         String key = "otp:" + role + ":" + phone;
         String otp = String.format("%06d", new Random().nextInt(999999));
+
         redis.opsForValue().set(key, otp, Duration.ofMinutes(5));
+
         return otp;
     }
 
     public boolean verifyOtp(String phone, String role, String otp) {
+
         String key = "otp:" + role + ":" + phone;
         String real = redis.opsForValue().get(key);
+
         return real != null && real.equals(otp);
     }
 

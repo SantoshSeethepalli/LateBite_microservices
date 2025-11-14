@@ -18,26 +18,31 @@ public class AuthController {
 
     @PostMapping("/send_otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> req) {
+
         return ResponseEntity.ok(service.sendOtp(req));
     }
 
     @PostMapping("/verify_otp")
     public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> req) {
+
         return ResponseEntity.ok(service.verifyOtp(req));
     }
 
     @PostMapping("/complete_profile")
     public ResponseEntity<?> complete(@RequestBody CompleteProfileRequest req) {
+
         return ResponseEntity.ok(service.completeProfile(req));
     }
 
     @PostMapping("/renew_refresh")
     public ResponseEntity<?> renew(@RequestBody Map<String, String> req) {
+
         return ResponseEntity.ok(service.renew(req));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody Map<String, String> req) {
+
         return ResponseEntity.ok(service.logout(req));
     }
 }

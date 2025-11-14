@@ -73,8 +73,7 @@ public class AuthFlowService {
         Role role = Role.valueOf(req.get("role"));
         String otp = req.get("otp");
 
-        if (!otpService.verifyOtp(phone, role.name(), otp))
-            return Map.of("error", "invalid_otp");
+        if (!otpService.verifyOtp(phone, role.name(), otp)) return Map.of("error", "invalid_otp");
 
         AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
                 .orElseThrow();
@@ -186,6 +185,7 @@ public class AuthFlowService {
         String raw = req.get("refreshToken");
 
         RefreshToken stored = refreshTokenRepository.findByAuthUserId(authUserId).orElse(null);
+
         if (stored == null)
             return Map.of("error", "invalid_refresh");
 

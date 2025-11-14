@@ -13,6 +13,7 @@ public class JwtUtil {
     private String secret;
 
     public Claims validateToken(String token) {
+        
         return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
                 .build()

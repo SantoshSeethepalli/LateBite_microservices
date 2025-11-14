@@ -17,6 +17,7 @@ public class JwtUtil {
     private Long exp;
 
     public String generateAccessToken(Long authUserId, Long refId, String role, String phone) {
+
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
@@ -31,6 +32,7 @@ public class JwtUtil {
     }
 
     public Claims validate(String token) {
+
         return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
                 .build()
