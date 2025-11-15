@@ -24,10 +24,10 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
     private final WebClient.Builder webClientBuilder;
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
-            "/auth/send_otp",
-            "/auth/verify_otp",
-            "/auth/complete_profile",
-            "/auth/renew_refresh",
+            "/auth/send-otp",
+            "/auth/verify-otp",
+            "/auth/complete-profile",
+            "/auth/renew-refresh",
             "/auth/logout",
             "/swagger-ui.html",
             "/api-docs"
