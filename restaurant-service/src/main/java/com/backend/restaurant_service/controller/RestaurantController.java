@@ -16,18 +16,29 @@ public class RestaurantController {
     private final RestaurantService restaurantService;
 
     @PostMapping("/create")
-    public ResponseEntity<Long> createRestaurant(@RequestBody CreateRestaurantRequest request) {
+    public ResponseEntity<Long> createRestaurant(
+            @RequestBody CreateRestaurantRequest request
+    ) {
 
         Long restaurantId = restaurantService.createRestaurant(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(restaurantId);
     }
 
-    @PatchMapping("/update/{restaurantId}")
-    public ResponseEntity<Void> updateRestaurantSettings(@PathVariable Long restaurantId, @RequestBody RestaurantUpdateRequest request) {
+    @PatchMapping("/update}")
+    public ResponseEntity<String> updateRestaurantSettings(
+            @RequestHeader("X-Ref-Id") Long restaurantId,
+            @RequestHeader("X-Role") String role,
+            @RequestBody RestaurantUpdateRequest request
+    ) {
+        if (!role.equals("RESTAURANT")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
-          restaurantService.updateSettings(restaurantId, request);
+        restaurantService.updateSettings(restaurantId, request);
 
-          return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body("Profile Updated");
     }
 }

@@ -1,4 +1,4 @@
-package com.backend.auth_services.utils.dtos;
+package com.backend.auth_services.utils.dtos.otp.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

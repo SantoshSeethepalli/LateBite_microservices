@@ -1,6 +1,7 @@
 package com.backend.api_gateway.config;
 
 import com.backend.api_gateway.security.JwtAuthFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
@@ -10,17 +11,15 @@ import org.springframework.web.servlet.function.RouterFunction;
 import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
+@RequiredArgsConstructor
 public class ApiGatewayConfig {
 
     private final JwtAuthFilter jwtFilter;
 
-    public ApiGatewayConfig(JwtAuthFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
-
     // Auth service routes (public, no JWT)
     @Bean
     public RouterFunction<?> authServiceRoute() {
+
         return GatewayRouterFunctions.route("auth-service")
                 .route(path("/auth/**"),
                         HandlerFunctions.http("lb://AUTH-SERVICE"))
@@ -30,6 +29,7 @@ public class ApiGatewayConfig {
     // User service (protected)
     @Bean
     public RouterFunction<?> userServiceRoute() {
+
         return GatewayRouterFunctions.route("user-service")
                 .filter(jwtFilter)
                 .route(path("/api/user/**"),
@@ -40,6 +40,7 @@ public class ApiGatewayConfig {
     // Restaurant main APIs (protected)
     @Bean
     public RouterFunction<?> restaurantMainRoute() {
+
         return GatewayRouterFunctions.route("restaurant-service-main")
                 .filter(jwtFilter)
                 .route(path("/api/restaurant/**"),
@@ -50,6 +51,7 @@ public class ApiGatewayConfig {
     // Restaurant MenuItem APIs (protected)
     @Bean
     public RouterFunction<?> restaurantMenuItemRoute() {
+
         return GatewayRouterFunctions.route("restaurant-service-menuitem")
                 .filter(jwtFilter)
                 .route(path("/api/MenuItem/**"),
@@ -60,6 +62,7 @@ public class ApiGatewayConfig {
     // Cart service (protected)
     @Bean
     public RouterFunction<?> cartServiceRoute() {
+
         return GatewayRouterFunctions.route("cart-service")
                 .filter(jwtFilter)
                 .route(path("/api/cart/**"),
@@ -70,6 +73,7 @@ public class ApiGatewayConfig {
     // Order service (protected)
     @Bean
     public RouterFunction<?> orderServiceRoute() {
+
         return GatewayRouterFunctions.route("order-service")
                 .route(path("/api/order/**"),
                         HandlerFunctions.http("lb://ORDER-SERVICE"))
@@ -80,6 +84,7 @@ public class ApiGatewayConfig {
     // Payment service (protected)
     @Bean
     public RouterFunction<?> paymentServiceRoute() {
+
         return GatewayRouterFunctions.route("payment-service")
                 .filter(jwtFilter)
                 .route(path("/api/payment/**"),

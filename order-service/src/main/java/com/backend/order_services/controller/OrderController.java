@@ -24,7 +24,11 @@ public class OrderController {
             @RequestHeader("X-Role") String role,
             @RequestBody PlaceOrderRequest placeOrderRequest
     ) {
-        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!role.equals("USER")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         orderService.placeOrder(userId, placeOrderRequest);
 
@@ -34,7 +38,11 @@ public class OrderController {
     @GetMapping("/pastOrders")
     public ResponseEntity<List<OrderResponse>> getAllDeliveredOrdersOfUser(@RequestHeader("X-Ref-Id") Long userId, @RequestHeader("X-Role") String role) {
 
-        if (role == null || !role.equalsIgnoreCase("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (role == null || !role.equalsIgnoreCase("USER")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         List<OrderResponse> deliveredOrders = orderService.getAllDeliveredOrdersOfUser(userId);
 
@@ -42,13 +50,17 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}/cancel")
-    public ResponseEntity<Void> cancelOrder(@RequestHeader("X-Ref-Id") Long currentUserId, @PathVariable Long orderId, @RequestHeader("X-Role") String role) {
+    public ResponseEntity<String> cancelOrder(@RequestHeader("X-Ref-Id") Long currentUserId, @PathVariable Long orderId, @RequestHeader("X-Role") String role) {
 
-        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!role.equals("USER")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         orderService.cancelOrder(currentUserId, orderId);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().body("Order Cancelled.");
     }
 
 
@@ -56,24 +68,29 @@ public class OrderController {
     public ResponseEntity<Long> getEstimatedDeliveryTime(@PathVariable Long orderId,
                                                          @RequestHeader("X-Ref-Id") Long userId, @RequestHeader("X-Role") String role) {
 
-        if (!role.equals("USER")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!role.equals("USER")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         Long estimatedWaitingTime = orderService.getEstimatedDeliveryTime(orderId, userId);
 
         return ResponseEntity.ok(estimatedWaitingTime);
     }
 
-    @GetMapping("/restaurant/{restaurantId}")
+    @GetMapping("/restaurant/allOrders")
     public ResponseEntity<List<OrderResponse>> getAllOrdersOfRestaurant(
-            @PathVariable Long restaurantId,
-            @RequestHeader("X-Ref-Id") Long refId,
+            @RequestHeader("X-Ref-Id") Long restaurantId,
             @RequestHeader("X-Role") String role,
             @RequestParam(required = false) String status
     ) {
 
-        if (!role.equals("RESTAURANT")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-
-        if (!restaurantId.equals(refId)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (!role.equals("RESTAURANT")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         List<OrderResponse> responses = orderService.getAllOrdersOfRestaurant(restaurantId, status);
 
@@ -88,7 +105,11 @@ public class OrderController {
             @RequestParam String updatedStatus
     ) {
 
-        if (!role.equals("RESTAURANT")) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!role.equals("RESTAURANT")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         orderService.updateOrderStatus(restaurantId, orderId, updatedStatus);
 

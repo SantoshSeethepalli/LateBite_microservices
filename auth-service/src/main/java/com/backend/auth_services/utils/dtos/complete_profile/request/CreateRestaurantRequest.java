@@ -1,4 +1,4 @@
-package com.backend.auth_services.utils.dtos;
+package com.backend.auth_services.utils.dtos.complete_profile.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

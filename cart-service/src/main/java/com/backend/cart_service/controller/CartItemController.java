@@ -3,6 +3,8 @@ package com.backend.cart_service.controller;
 import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.utils.dto.ItemToCartItemRequest;
 import com.backend.cart_service.service.CartItemsService;
+import com.backend.cart_service.utils.exceptions.exps.IllegalAccessException;
+import com.backend.cart_service.utils.exceptions.exps.UserAccessDenied;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +18,24 @@ public class CartItemController {
     private final CartItemsService cartItemsService;
 
     @PutMapping("/addOrUpdate")
-    public ResponseEntity<Cart> modifyCartItem(@RequestBody ItemToCartItemRequest request, @RequestParam(defaultValue = "true") Boolean increaseQuantity) {
+    public ResponseEntity<Cart> modifyCartItem(
+            @RequestHeader("X-Ref-Id") Long userId,
+            @RequestHeader("X-Role") String role,
+            @RequestBody ItemToCartItemRequest request,
+            @RequestParam(defaultValue = "true") Boolean increaseQuantity) {
+
+        if (!role.equals("USER")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
+
+        if (request.getUserId().equals(userId)) {
+
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .build();
+        }
 
         Cart response = cartItemsService.updateItemInCart(request, increaseQuantity);
 

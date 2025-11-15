@@ -1,19 +1,27 @@
 package com.backend.auth_services.service;
 
+import lombok.RequiredArgsConstructor;
+
 import com.backend.auth_services.model.*;
 import com.backend.auth_services.repository.*;
 import com.backend.auth_services.security.JwtUtil;
 import com.backend.auth_services.service.sms.SmsService;
-import com.backend.auth_services.utils.dtos.CompleteProfileRequest;
-import com.backend.auth_services.utils.dtos.CreateRestaurantRequest;
-import com.backend.auth_services.utils.dtos.CreateUserRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import com.backend.auth_services.utils.dtos.complete_profile.request.*;
+import com.backend.auth_services.utils.dtos.complete_profile.response.CompleteProfileResponse;
+import com.backend.auth_services.utils.dtos.logout.*;
+import com.backend.auth_services.utils.dtos.otp.request.*;
+import com.backend.auth_services.utils.dtos.otp.resposne.*;
+import com.backend.auth_services.utils.dtos.renew.*;
+import com.backend.auth_services.utils.exceptions.CustomRuntimeException;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.Map;
@@ -44,10 +52,10 @@ public class AuthFlowService {
 
     // SEND OTP -------------------------------------------------------------
 
-    public Map<String, Object> sendOtp(Map<String, String> req) {
+    public SendOtpResponse sendOtp(SendOtpRequest req) {
 
-        String phone = req.get("phone");
-        Role role = Role.valueOf(req.get("role"));
+        String phone = req.getPhone();
+        Role role = Role.valueOf(req.getRole());
 
         AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
                 .orElseGet(() -> authRepository.save(AuthUser.builder()
@@ -59,42 +67,43 @@ public class AuthFlowService {
         String otp = otpService.generateOtp(phone, role.name());
         smsService.sendSms("+91" + phone, "Your OTP is: " + otp);
 
-        return Map.of("status", "otp_sent");
+        return new SendOtpResponse("otp_sent");
     }
-
 
 
     // VERIFY OTP -------------------------------------------------------------
 
     @Transactional
-    public Map<String, Object> verifyOtp(Map<String, String> req) {
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest req) {
 
-        String phone = req.get("phone");
-        Role role = Role.valueOf(req.get("role"));
-        String otp = req.get("otp");
+        String phone = req.getPhone();
+        Role role = Role.valueOf(req.getRole());
+        String otp = req.getOtp();
 
-        if (!otpService.verifyOtp(phone, role.name(), otp)) return Map.of("error", "invalid_otp");
+        if (!otpService.verifyOtp(phone, role.name(), otp))
+            throw new CustomRuntimeException("invalid_otp", HttpStatus.UNAUTHORIZED);
 
         AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new CustomRuntimeException("auth_user_not_found", HttpStatus.NOT_FOUND)
+                );
 
         otpService.deleteOtp(phone, role.name());
 
-        // User still needs to fill profile details
         if (user.getStatus() == Status.NEW || user.getStatus() == Status.PENDING_VERIFIED) {
-
             user.setStatus(Status.PENDING_VERIFIED);
             authRepository.save(user);
 
-            return Map.of(
-                    "detailsRequired", true,
-                    "authUserId", user.getId(),
-                    "phone", user.getPhoneNumber(),
-                    "role", user.getRole().name()
+            return new VerifyOtpResponse(
+                    true,
+                    user.getId(),
+                    null,
+                    null,
+                    user.getRole().name(),
+                    user.getPhoneNumber()
             );
         }
 
-        // User already completed profile => generate tokens
         String access = jwt.generateAccessToken(
                 user.getId(),
                 user.getReferenceId(),
@@ -104,12 +113,13 @@ public class AuthFlowService {
 
         String refreshRaw = createRefresh(user.getId());
 
-        return Map.of(
-                "detailsRequired", false,
-                "accessToken", access,
-                "refreshToken", refreshRaw,
-                "role", role.name(),
-                "phone", phone
+        return new VerifyOtpResponse(
+                false,
+                null,
+                access,
+                refreshRaw,
+                role.name(),
+                phone
         );
     }
 
@@ -118,10 +128,12 @@ public class AuthFlowService {
     // COMPLETE PROFILE -------------------------------------------------------------
 
     @Transactional
-    public Map<String, Object> completeProfile(CompleteProfileRequest req) {
+    public CompleteProfileResponse completeProfile(CompleteProfileRequest req) {
 
         Long authUserId = req.getAuthUserId();
-        AuthUser user = authRepository.findById(authUserId).orElseThrow();
+
+        AuthUser user = authRepository.findById(authUserId)
+                .orElseThrow(() -> new CustomRuntimeException("auth_user_not_found", HttpStatus.NOT_FOUND));
 
         Long refId;
 
@@ -139,8 +151,11 @@ public class AuthFlowService {
                     .retrieve()
                     .bodyToMono(Long.class)
                     .block();
-        }
-        else {
+
+            if (refId == null)
+                throw new CustomRuntimeException("user_service_failed", HttpStatus.BAD_REQUEST);
+
+        } else {
 
             CreateRestaurantRequest dto =
                     objectMapper.convertValue(req.getPayload(), CreateRestaurantRequest.class);
@@ -154,6 +169,9 @@ public class AuthFlowService {
                     .retrieve()
                     .bodyToMono(Long.class)
                     .block();
+
+            if (refId == null)
+                throw new CustomRuntimeException("restaurant_service_failed", HttpStatus.BAD_REQUEST);
         }
 
         user.setReferenceId(refId);
@@ -161,41 +179,42 @@ public class AuthFlowService {
         authRepository.save(user);
 
         String access = jwt.generateAccessToken(
-                user.getId(), refId, user.getRole().name(), user.getPhoneNumber()
+                user.getId(),
+                refId,
+                user.getRole().name(),
+                user.getPhoneNumber()
         );
 
         String refresh = createRefresh(user.getId());
 
-        return Map.of(
-                "accessToken", access,
-                "refreshToken", refresh,
-                "role", user.getRole().name(),
-                "phone", user.getPhoneNumber()
+        return new CompleteProfileResponse(
+                access,
+                refresh,
+                user.getRole().name(),
+                user.getPhoneNumber()
         );
     }
 
 
-
-
     // RENEW TOKEN -------------------------------------------------------------
 
-    public Map<String, Object> renew(Map<String, String> req) {
+    public RenewResponseDto renew(RenewRequestDto req) {
 
-        Long authUserId = Long.valueOf(req.get("authUserId"));
-        String raw = req.get("refreshToken");
+        Long authUserId = req.getAuthUserId();
+        String raw = req.getRefreshToken();
 
         RefreshToken stored = refreshTokenRepository.findByAuthUserId(authUserId).orElse(null);
-
         if (stored == null)
-            return Map.of("error", "invalid_refresh");
+            throw new CustomRuntimeException("invalid_refresh", HttpStatus.UNAUTHORIZED);
 
         if (stored.getExpiresAt() < Instant.now().getEpochSecond())
-            return Map.of("error", "expired_refresh");
+            throw new CustomRuntimeException("expired_refresh", HttpStatus.UNAUTHORIZED);
 
         if (!BCrypt.checkpw(raw, stored.getRefreshTokenHash()))
-            return Map.of("error", "invalid_refresh");
+            throw new CustomRuntimeException("invalid_refresh", HttpStatus.UNAUTHORIZED);
 
-        AuthUser user = authRepository.findById(authUserId).orElseThrow();
+        AuthUser user = authRepository.findById(authUserId)
+                .orElseThrow(() -> new CustomRuntimeException("auth_user_not_found", HttpStatus.NOT_FOUND));
 
         String access = jwt.generateAccessToken(
                 user.getId(),
@@ -206,22 +225,18 @@ public class AuthFlowService {
 
         String newRefresh = createRefresh(authUserId);
 
-        return Map.of(
-                "accessToken", access,
-                "refreshToken", newRefresh
-        );
+        return new RenewResponseDto(access, newRefresh);
     }
-
 
 
     // LOGOUT -------------------------------------------------------------
 
-    public Map<String, Object> logout(Map<String, String> req) {
+    public LogoutResponse logout(LogoutRequest req) {
 
-        Long authUserId = Long.valueOf(req.get("authUserId"));
+        Long authUserId = req.getAuthUserId();
         refreshTokenRepository.deleteByAuthUserId(authUserId);
 
-        return Map.of("status", "logged_out");
+        return new LogoutResponse("logged_out");
     }
 
 
