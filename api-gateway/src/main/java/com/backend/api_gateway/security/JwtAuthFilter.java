@@ -79,7 +79,7 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
                 TokenRenewResponse response = webClientBuilder
                         .build()
                         .post()
-                        .uri("/auth/renew-refresh")
+                        .uri("lb://AUTH-SERVICE/auth/renew-refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue("{\"refreshToken\":\"" + refresh + "\"}")
                         .retrieve()
@@ -113,7 +113,7 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
         try {
             webClientBuilder.build()
                     .post()
-                    .uri("/auth/logout")
+                    .uri("lb://AUTH-SERVICE/auth/logout")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of("authUserId", authUserId))
                     .retrieve()
