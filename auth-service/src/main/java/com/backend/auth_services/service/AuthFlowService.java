@@ -24,7 +24,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -67,7 +66,7 @@ public class AuthFlowService {
         String otp = otpService.generateOtp(phone, role.name());
         smsService.sendSms("+91" + phone, "Your OTP is: " + otp);
 
-        return new SendOtpResponse("otp_sent");
+        return new SendOtpResponse("otp sent to " + phone);
     }
 
 
@@ -122,7 +121,6 @@ public class AuthFlowService {
                 phone
         );
     }
-
 
 
     // COMPLETE PROFILE -------------------------------------------------------------
@@ -238,7 +236,6 @@ public class AuthFlowService {
 
         return new LogoutResponse("logged_out");
     }
-
 
 
     // REFRESH TOKEN GENERATOR -------------------------------------------------------------
