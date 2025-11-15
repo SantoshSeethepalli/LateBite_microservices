@@ -122,7 +122,7 @@ public class OrderService {
 
         if(orders.isEmpty()) {
 
-            throw new OrderNotFoundException("No orders found with user id: " + userId);
+            return new ArrayList<>();
         }
 
         List<OrderResponse> responses = new ArrayList<>();
