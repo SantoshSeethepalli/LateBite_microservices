@@ -25,7 +25,7 @@ public class RestaurantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(restaurantId);
     }
 
-    @PatchMapping("/update}")
+    @PatchMapping("/update")
     public ResponseEntity<String> updateRestaurantSettings(
             @RequestHeader("X-Ref-Id") Long restaurantId,
             @RequestHeader("X-Role") String role,
