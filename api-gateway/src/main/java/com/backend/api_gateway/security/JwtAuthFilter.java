@@ -21,7 +21,7 @@ import java.util.Set;
 public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, ServerResponse> {
 
     private final JwtUtil jwtUtil;
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/auth/send_otp",
@@ -76,7 +76,8 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
                     return forceLogout(authUserId);
                 }
 
-                TokenRenewResponse response = webClient
+                TokenRenewResponse response = webClientBuilder
+                        .build()
                         .post()
                         .uri("/auth/renew-refresh")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +111,8 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
     private ServerResponse forceLogout(Long authUserId) {
 
         try {
-            webClient.post()
+            webClientBuilder.build()
+                    .post()
                     .uri("/auth/logout")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of("authUserId", authUserId))
