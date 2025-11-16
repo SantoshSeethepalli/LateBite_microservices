@@ -17,8 +17,14 @@ public class RestaurantController {
 
     @PostMapping("/create")
     public ResponseEntity<Long> createRestaurant(
+            @RequestHeader("X-Role") String role,
             @RequestBody CreateRestaurantRequest request
     ) {
+        if (!role.equals("ADMIN")) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
 
         Long restaurantId = restaurantService.createRestaurant(request);
 

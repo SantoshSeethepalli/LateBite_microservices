@@ -1,5 +1,6 @@
 package com.backend.auth_services.service;
 
+import com.backend.auth_services.utils.dtos.admin_login.CreateRestaurantAuthRequest;
 import lombok.RequiredArgsConstructor;
 
 import com.backend.auth_services.model.*;
@@ -133,7 +134,7 @@ public class AuthFlowService {
         AuthUser user = authRepository.findById(authUserId)
                 .orElseThrow(() -> new CustomRuntimeException("auth_user_not_found", HttpStatus.NOT_FOUND));
 
-        Long refId;
+        Long refId = null;
 
         if (user.getRole() == Role.USER) {
 
@@ -153,23 +154,9 @@ public class AuthFlowService {
             if (refId == null)
                 throw new CustomRuntimeException("user_service_failed", HttpStatus.BAD_REQUEST);
 
-        } else {
+        } else if (user.getRole() == Role.RESTAURANT) {
 
-            CreateRestaurantRequest dto =
-                    objectMapper.convertValue(req.getPayload(), CreateRestaurantRequest.class);
-
-            dto.setPhoneNumber(user.getPhoneNumber());
-
-            refId = webClientBuilder.build()
-                    .post()
-                    .uri(restaurantService + "/api/restaurant/create")
-                    .bodyValue(dto)
-                    .retrieve()
-                    .bodyToMono(Long.class)
-                    .block();
-
-            if (refId == null)
-                throw new CustomRuntimeException("restaurant_service_failed", HttpStatus.BAD_REQUEST);
+            throw new CustomRuntimeException("restaurant can only be created by admin", HttpStatus.FORBIDDEN);
         }
 
         user.setReferenceId(refId);
