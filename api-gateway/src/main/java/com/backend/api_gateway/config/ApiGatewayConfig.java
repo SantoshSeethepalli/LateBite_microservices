@@ -21,6 +21,7 @@ public class ApiGatewayConfig {
     public RouterFunction<?> authServiceRoute() {
 
         return GatewayRouterFunctions.route("auth-service")
+                .filter(jwtFilter)
                 .route(path("/auth/**"),
                         HandlerFunctions.http("lb://AUTH-SERVICE"))
                 .build();
