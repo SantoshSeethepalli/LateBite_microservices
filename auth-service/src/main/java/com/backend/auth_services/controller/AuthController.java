@@ -1,7 +1,7 @@
 package com.backend.auth_services.controller;
 
 import com.backend.auth_services.service.AuthFlowService;
-import com.backend.auth_services.utils.dtos.admin_login.CreateRestaurantAuthRequest;
+import com.backend.auth_services.utils.dtos.admin_login.AdminLoginRequest;
 import com.backend.auth_services.utils.dtos.complete_profile.request.CompleteProfileRequest;
 import com.backend.auth_services.utils.dtos.complete_profile.response.CompleteProfileResponse;
 import com.backend.auth_services.utils.dtos.logout.*;
@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,4 +51,10 @@ public class AuthController {
 
         return ResponseEntity.ok().body(service.logout(req));
     }
+
+    @PostMapping("/admin/login")
+    public ResponseEntity<VerifyOtpResponse> adminLogin(@RequestBody AdminLoginRequest req) {
+        return ResponseEntity.ok(service.adminLogin(req));
+    }
+
 }

@@ -11,7 +11,7 @@ public class RestaurantMappers {
 
         return Restaurant.builder()
                 .username(request.getUsername())
-                .phoneNumber(request.getPhoneNumber())
+                .phoneNumber(request.getPhone())
                 .upiId(request.getUpiId())
                 .profilePhoto(request.getProfilePhoto())
                 .updatedAt(LocalDateTime.now())

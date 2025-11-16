@@ -1,6 +1,6 @@
 package com.backend.auth_services.service;
 
-import com.backend.auth_services.utils.dtos.admin_login.CreateRestaurantAuthRequest;
+import com.backend.auth_services.utils.dtos.admin_login.AdminLoginRequest;
 import lombok.RequiredArgsConstructor;
 
 import com.backend.auth_services.model.*;
@@ -50,8 +50,9 @@ public class AuthFlowService {
 
     private final WebClient.Builder webClientBuilder;
 
-    // SEND OTP -------------------------------------------------------------
+    // SEND OTP -----------------------------------------------------------------------
 
+    @Transactional
     public SendOtpResponse sendOtp(SendOtpRequest req) {
 
         String phone = req.getPhone();
@@ -71,7 +72,7 @@ public class AuthFlowService {
     }
 
 
-    // VERIFY OTP -------------------------------------------------------------
+    // VERIFY OTP ----------------------------------------------------------------------
 
     @Transactional
     public VerifyOtpResponse verifyOtp(VerifyOtpRequest req) {
@@ -124,7 +125,7 @@ public class AuthFlowService {
     }
 
 
-    // COMPLETE PROFILE -------------------------------------------------------------
+    // COMPLETE PROFILE -----------------------------------------------------------------
 
     @Transactional
     public CompleteProfileResponse completeProfile(CompleteProfileRequest req) {
@@ -181,8 +182,9 @@ public class AuthFlowService {
     }
 
 
-    // RENEW TOKEN -------------------------------------------------------------
+    // RENEW TOKEN -----------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
     public RenewResponseDto renew(RenewRequestDto req) {
 
         Long authUserId = req.getAuthUserId();
@@ -214,8 +216,9 @@ public class AuthFlowService {
     }
 
 
-    // LOGOUT -------------------------------------------------------------
+    // LOGOUT --------------------------------------------------------------------------
 
+    @Transactional
     public LogoutResponse logout(LogoutRequest req) {
 
         Long authUserId = req.getAuthUserId();
@@ -225,8 +228,9 @@ public class AuthFlowService {
     }
 
 
-    // REFRESH TOKEN GENERATOR -------------------------------------------------------------
+    // REFRESH TOKEN GENERATOR ---------------------------------------------------------
 
+    @Transactional
     private String createRefresh(Long authUserId) {
 
         String raw = UUID.randomUUID() + "-" + UUID.randomUUID();
@@ -244,4 +248,44 @@ public class AuthFlowService {
 
         return raw;
     }
+
+    // ADMIN Login ---------------------------------------------------------------------
+
+    @Transactional
+    public VerifyOtpResponse adminLogin(AdminLoginRequest req) {
+
+        String phone = req.getPhone();
+        String otp = req.getOtp();
+
+        // check otp
+        if (!otpService.verifyOtp(phone, Role.ADMIN.name(), otp))
+            throw new CustomRuntimeException("invalid_otp", HttpStatus.UNAUTHORIZED);
+
+        AuthUser admin = authRepository.findByPhoneNumberAndRole(phone, Role.ADMIN)
+                .orElseThrow(() ->
+                        new CustomRuntimeException("admin_not_found", HttpStatus.NOT_FOUND)
+                );
+
+        otpService.deleteOtp(phone, Role.ADMIN.name());
+
+        // admin has no refId
+        String access = jwt.generateAccessToken(
+                admin.getId(),
+                null,
+                Role.ADMIN.name(),
+                phone
+        );
+
+        String refresh = createRefresh(admin.getId());
+
+        return new VerifyOtpResponse(
+                false,
+                admin.getId(),    // ✔ FIXED
+                access,
+                refresh,
+                Role.ADMIN.name(),
+                phone
+        );
+    }
+
 }

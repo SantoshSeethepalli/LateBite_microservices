@@ -6,6 +6,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateRestaurantAuthRequest {
-    private String phoneNumber;
+public class AdminLoginRequest {
+    private String phone;
+    private String otp;
 }

@@ -13,6 +13,6 @@ public class CreateRestaurantRequest {
 
     private String username;
     private String profilePhoto;
-    private String phoneNumber;
+    private String phone;
     private String upiId;
 }

@@ -47,4 +47,29 @@ public class RestaurantController {
 
         return ResponseEntity.ok().body("Profile Updated");
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllRestaurants(
+            @RequestHeader("X-Role") String role
+    ) {
+        if (!role.equals("ADMIN"))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        return ResponseEntity.ok(restaurantService.getAll());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteRestaurant(
+            @RequestHeader("X-Role") String role,
+            @PathVariable Long id
+    ) {
+        if (!role.equals("ADMIN"))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        restaurantService.delete(id);
+
+        return ResponseEntity.ok("Deleted");
+    }
+
+
 }

@@ -29,6 +29,7 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
             "/auth/complete-profile",
             "/auth/renew-refresh",
             "/auth/logout",
+            "/auth/admin/login",
             "/swagger-ui.html",
             "/api-docs"
     );
@@ -46,20 +47,26 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
         String path = request.uri().getPath();
         if (isPublic(path)) return next.handle(request);
 
-        String auth = request.headers().firstHeader("Authorization");
+        String auth = request.headers().firstHeader("authorization");
+        if (auth == null) auth = request.headers().firstHeader("Authorization");
 
         if (auth == null || !auth.startsWith("Bearer ")) {
             return ServerResponse.status(401).body("Missing or invalid Authorization header");
         }
+
+        System.out.println("HEADERS = " + request.headers().asHttpHeaders());
 
         String token = auth.substring(7);
 
         try {
             var claims = jwtUtil.validateToken(token);
 
+            Object refClaim = claims.get("refId");
+            String ref = refClaim == null ? "-1" : refClaim.toString();
+
             ServerRequest mutated = ServerRequest.from(request)
                     .header("X-User-Id", claims.getSubject())
-                    .header("X-Ref-Id", claims.get("refId").toString())
+                    .header("X-Ref-Id", ref)
                     .header("X-Role", claims.get("role").toString())
                     .header("X-Phone", claims.get("phone").toString())
                     .build();
@@ -68,40 +75,45 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
 
         } catch (ExpiredJwtException ex) {
 
-                String refresh = request.headers().firstHeader("X-Refresh-Token");
+            String refresh = request.headers().firstHeader("X-Refresh-Token");
+            Long authUserId = Long.parseLong(ex.getClaims().getSubject());
 
-                Long authUserId = Long.parseLong(ex.getClaims().getSubject());
+            if (refresh == null) {
+                return forceLogout(authUserId);
+            }
 
-                if (refresh == null) {
-                    return forceLogout(authUserId);
-                }
+            TokenRenewResponse response = webClientBuilder
+                    .build()
+                    .post()
+                    .uri("lb://AUTH-SERVICE/auth/renew-refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(Map.of(
+                            "authUserId", authUserId,
+                            "refreshToken", refresh
+                    ))
+                    .retrieve()
+                    .bodyToMono(TokenRenewResponse.class)
+                    .onErrorResume(err -> null)
+                    .block();
 
-                TokenRenewResponse response = webClientBuilder
-                        .build()
-                        .post()
-                        .uri("lb://AUTH-SERVICE/auth/renew-refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue("{\"refreshToken\":\"" + refresh + "\"}")
-                        .retrieve()
-                        .bodyToMono(TokenRenewResponse.class)
-                        .onErrorResume(err -> null)
-                        .block();
+            if (response == null || response.getAccessToken() == null)
+                return forceLogout(authUserId);
 
-                if (response == null || response.getAccessToken() == null)
-                    return forceLogout(authUserId);
+            String newAccess = response.getAccessToken();
+            var newClaims = jwtUtil.validateToken(newAccess);
 
-                String newAccess = response.getAccessToken();
-                var newClaims = jwtUtil.validateToken(newAccess);
+            Object newRefClaim = newClaims.get("refId");
+            String newRef = newRefClaim == null ? "-1" : newRefClaim.toString();
 
-                ServerRequest mutated = ServerRequest.from(request)
-                        .header("X-User-Id", newClaims.getSubject())
-                        .header("X-Ref-Id", newClaims.get("refId").toString())
-                        .header("X-Role", newClaims.get("role").toString())
-                        .header("X-Phone", newClaims.get("phone").toString())
-                        .header("X-New-Access-Token", newAccess)
-                        .build();
+            ServerRequest mutated = ServerRequest.from(request)
+                    .header("X-User-Id", newClaims.getSubject())
+                    .header("X-Ref-Id", newRef)
+                    .header("X-Role", newClaims.get("role").toString())
+                    .header("X-Phone", newClaims.get("phone").toString())
+                    .header("X-New-Access-Token", newAccess)
+                    .build();
 
-                return next.handle(mutated);
+            return next.handle(mutated);
 
         } catch (Exception e) {
             return ServerResponse.status(401).body("Invalid or expired token");

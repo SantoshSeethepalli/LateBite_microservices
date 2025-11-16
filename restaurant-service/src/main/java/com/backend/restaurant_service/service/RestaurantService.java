@@ -7,10 +7,13 @@ import com.backend.restaurant_service.repository.RestaurantRepository;
 import com.backend.restaurant_service.utils.Mappers.RestaurantMappers;
 import com.backend.restaurant_service.utils.dto.CreateRestaurantRequest;
 import com.backend.restaurant_service.utils.dto.RestaurantUpdateRequest;
+import com.backend.restaurant_service.utils.dto.admin.RestaurantResponse;
 import com.backend.restaurant_service.utils.exceptions.exps.RestaurantNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -37,4 +40,18 @@ public class RestaurantService {
 
             restaurantRepository.save(restaurant);
     }
+
+    public List<RestaurantResponse> getAll() {
+
+        return restaurantRepository.findAll()
+                .stream()
+                .map(RestaurantResponse::from)
+                .toList();
+    }
+
+    public void delete(Long id) {
+
+        restaurantRepository.deleteById(id);
+    }
+
 }
