@@ -1,9 +1,7 @@
 package com.backend.cart_service.controller;
 
 import com.backend.cart_service.utils.dto.CartDetailsResponse;
-import com.backend.cart_service.model.Cart;
 import com.backend.cart_service.service.CartService;
-import com.backend.cart_service.utils.exceptions.exps.IllegalAccessException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

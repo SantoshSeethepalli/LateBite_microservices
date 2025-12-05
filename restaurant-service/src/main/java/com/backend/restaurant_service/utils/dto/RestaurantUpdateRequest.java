@@ -1,7 +1,6 @@
 package com.backend.restaurant_service.utils.dto;
 
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

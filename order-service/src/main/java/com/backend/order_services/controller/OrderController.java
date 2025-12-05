@@ -3,7 +3,6 @@ package com.backend.order_services.controller;
 import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.service.OrderService;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

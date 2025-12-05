@@ -7,7 +7,6 @@ import com.backend.order_services.model.Order;
 import com.backend.order_services.model.OrderItem;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartItemDTO;
-import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
