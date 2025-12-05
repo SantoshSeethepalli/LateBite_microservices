@@ -1,6 +1,7 @@
 package com.backend.restaurant_service.service;
 
 
+import com.backend.restaurant_service.model.OperatingStatus;
 import com.backend.restaurant_service.utils.customComponents.RestaurantMapper;
 import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.repository.RestaurantRepository;
@@ -44,6 +45,14 @@ public class RestaurantService {
     public List<RestaurantResponse> getAll() {
 
         return restaurantRepository.findAll()
+                .stream()
+                .map(RestaurantResponse::from)
+                .toList();
+    }
+
+    public List<RestaurantResponse> getOpenRestaurants() {
+
+        return restaurantRepository.findByOperatingStatus(OperatingStatus.OPEN)
                 .stream()
                 .map(RestaurantResponse::from)
                 .toList();

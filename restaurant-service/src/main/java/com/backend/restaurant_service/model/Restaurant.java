@@ -1,6 +1,7 @@
 package com.backend.restaurant_service.model;
 
 import jakarta.persistence.*;
+import jakarta.ws.rs.DefaultValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,10 @@ public class Restaurant {
 
     @Column(nullable = false, unique = true)
     private String phoneNumber;
+
+    @Column(nullable = false)
+    @DefaultValue("CLOSED")
+    private OperatingStatus operatingStatus;
 
     @Column(nullable = false, unique = true)
     private String upiId;

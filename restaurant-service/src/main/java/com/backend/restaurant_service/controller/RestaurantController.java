@@ -3,10 +3,14 @@ package com.backend.restaurant_service.controller;
 import com.backend.restaurant_service.service.RestaurantService;
 import com.backend.restaurant_service.utils.dto.CreateRestaurantRequest;
 import com.backend.restaurant_service.utils.dto.RestaurantUpdateRequest;
+import com.backend.restaurant_service.utils.dto.admin.RestaurantResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/restaurant")
@@ -46,6 +50,18 @@ public class RestaurantController {
         restaurantService.updateSettings(restaurantId, request);
 
         return ResponseEntity.ok().body("Profile Updated");
+    }
+
+    @GetMapping("/browse")
+    public ResponseEntity<List<RestaurantResponse>> getOpenRestaurants(
+        @RequestHeader("X-Role") String role
+    ) {
+        
+        if(!role.equals("USER")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        return ResponseEntity.ok(restaurantService.getOpenRestaurants());
     }
 
     @GetMapping("/all")
