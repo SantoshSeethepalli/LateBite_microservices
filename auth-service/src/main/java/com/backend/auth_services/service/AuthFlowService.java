@@ -58,7 +58,7 @@ public class AuthFlowService {
         String phone = req.getPhone();
         Role role = Role.valueOf(req.getRole());
 
-        AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
+        authRepository.findByPhoneNumberAndRole(phone, role)
                 .orElseGet(() -> authRepository.save(AuthUser.builder()
                         .phoneNumber(phone)
                         .role(role)
