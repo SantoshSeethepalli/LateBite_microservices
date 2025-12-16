@@ -1,5 +1,6 @@
 package com.backend.restaurant_service.utils.Mappers;
 
+import com.backend.restaurant_service.model.OperatingStatus;
 import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.utils.dto.CreateRestaurantRequest;
 
@@ -14,6 +15,7 @@ public class RestaurantMappers {
                 .phoneNumber(request.getPhone())
                 .upiId(request.getUpiId())
                 .profilePhoto(request.getProfilePhoto())
+                .operatingStatus(OperatingStatus.CLOSED)
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();

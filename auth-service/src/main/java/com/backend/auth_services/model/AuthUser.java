@@ -23,4 +23,7 @@ public class AuthUser {
     private Status status;
 
     private Long referenceId;
+
+    // For admin password-based authentication only
+    private String password;
 }

@@ -1,0 +1,107 @@
+services:
+
+  discovery-server:
+    image: discovery-server
+    ports:
+      - "8765:8765"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: common_user
+      POSTGRES_PASSWORD: 123
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U common_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  user-service:
+    image: user-service
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  auth-service:
+    image: auth-service
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+  payment-service:
+    image: payment-service
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  restaurant-service:
+    image: restaurant-service
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  cart-service:
+    image: cart-service
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      restaurant-service:
+        condition: service_started
+
+  order-service:
+    image: order-service
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      cart-service:
+        condition: service_started
+
+  api-gateway:
+    image: api-gateway
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+volumes:
+  redis-data:

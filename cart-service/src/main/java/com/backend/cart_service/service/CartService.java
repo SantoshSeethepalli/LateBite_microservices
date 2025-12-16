@@ -25,32 +25,6 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemsService cartItemsService;
 
-    @Transactional
-    public Cart createCart(Long userId, Long restaurantId) {
-
-        Cart newCart = Cart.builder()
-                .userId(userId)
-                .restaurantId(restaurantId)
-                .totalAmount(BigDecimal.ZERO)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        return cartRepository.save(newCart);
-    }
-
-    public Cart getCartById(Long cartId) {
-
-        return cartRepository.findById(cartId)
-                .orElseThrow(() -> new CartNotFoundException("Cart not found with ID: " + cartId));
-    }
-
-    public Cart getCartByUserId(Long userId) {
-
-        return cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new CartNotFoundException("No cart found for user ID: " + userId));
-    }
-
     @Transactional(readOnly = true)
     public CartDetailsResponse getCompleteCartDetails(Long cartId, Long userId) {
 
@@ -69,39 +43,14 @@ public class CartService {
     }
 
     @Transactional
-    public Cart reCalculateTotal(Cart cart) {
-
-        List<CartItem> cartItems = cartItemsService.getItemsByCart(cart);
-
-        if(cartItems.isEmpty()) {
-
-            throw new CartItemNotFoundException("Cart no found with id: " + cart.getId());
-        }
-
-        BigDecimal total = cartItems.stream()
-                .map(CartItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        cart.setTotalAmount(total);
-        return cartRepository.save(cart);
-    }
-
-    @Transactional
-    public void clearCart(Cart cart) {
-
-        cartItemsService.deleteByCartId(cart);
-
-        cart.setTotalAmount(BigDecimal.ZERO);
-        cart.setUpdatedAt(LocalDateTime.now());
-
-        cartRepository.save(cart);
-    }
-
-    @Transactional
-    public void deleteCart(Long cartId) {
+    public void deleteCart(Long cartId, Long userId) {
 
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("Cart with id: " + cartId + " not found."));
+
+        if(!cart.getUserId().equals(userId)) {
+            throw new UserAccessDenied("You can't delete this cart");
+        }
 
         cartItemsService.deleteByCartId(cart);
         cartRepository.deleteById(cartId);

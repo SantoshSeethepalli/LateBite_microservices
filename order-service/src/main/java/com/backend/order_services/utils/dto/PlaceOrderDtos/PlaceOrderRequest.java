@@ -14,5 +14,5 @@ import java.math.BigDecimal;
 public class PlaceOrderRequest {
 
     private Long cartId;
-    private BigDecimal utrNumber;
+    private String utrNumber;
 }

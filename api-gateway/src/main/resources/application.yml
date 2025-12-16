@@ -1,0 +1,51 @@
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - http://localhost:3000
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+      routes:
+        - id: auth
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/**
+
+        - id: user
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/user/**
+
+        - id: restaurant
+          uri: lb://RESTAURANT-SERVICE
+          predicates:
+            - Path=/api/restaurant/**,/api/menu-item/**
+
+        - id: cart
+          uri: lb://CART-SERVICE
+          predicates:
+            - Path=/api/cart/**,/api/cartItem/**
+
+        - id: order
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/order/**
+
+        - id: payment
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payment/**

@@ -63,4 +63,30 @@ public class RestaurantService {
         restaurantRepository.deleteById(id);
     }
 
+    public Restaurant getRestaurantById(Long restaurantId) {
+
+        return restaurantRepository.findById(restaurantId)
+                .orElseThrow(() ->
+                        new RestaurantNotFoundException("Restaurant with ID " + restaurantId + " not found")
+                );
+    }
+
+    public String toggleOperatingStatus(Long restaurantId) {
+
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() ->
+                        new RestaurantNotFoundException("Restaurant with ID " + restaurantId + " not found")
+                );
+
+        OperatingStatus newStatus = null;
+
+        if(restaurant.getOperatingStatus() == OperatingStatus.CLOSED) newStatus = OperatingStatus.OPEN;
+        else newStatus = OperatingStatus.CLOSED;
+
+        restaurant.setOperatingStatus(newStatus);
+
+        restaurantRepository.save(restaurant);
+
+        return newStatus.name();
+    }
 }

@@ -9,6 +9,7 @@ import com.backend.cart_service.model.CartItem;
 import com.backend.cart_service.respository.CartItemRepository;
 import com.backend.cart_service.respository.CartRepository;
 import com.backend.cart_service.utils.exceptions.exps.*;
+import com.backend.cart_service.utils.exceptions.exps.IllegalAccessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +32,16 @@ public class CartItemsService {
     @Transactional
     public Cart updateItemInCart(ItemToCartItemRequest itemToCartItemRequest, Boolean increaseQuantity) {
 
-        Cart cart = cartRepository.findById(itemToCartItemRequest.getCartId())
-                .orElseGet(() -> {
-                    Cart newCart = CartMapper.createNewCart(itemToCartItemRequest);
-                    return cartRepository.save(newCart);
-                });
+        Cart cart;
 
+        if (itemToCartItemRequest.getCartId() == null) {
+            cart = cartRepository.save(
+                    CartMapper.createNewCart(itemToCartItemRequest)
+            );
+        } else {
+            cart = cartRepository.findById(itemToCartItemRequest.getCartId())
+                    .orElseThrow(() -> new RuntimeException("Cart not found"));
+        }
 
         if (!cart.getRestaurantId().equals(itemToCartItemRequest.getRestaurantId()))
             throw new RestaurantMisMatchException("This cart with id: " + cart.getId() + " belongs to different restaurant");
@@ -49,6 +54,10 @@ public class CartItemsService {
         if (existingCartItem == null) {
 
             RequiredItemDetails requiredItemDetails = fetchItemDetails(itemToCartItemRequest.getItemId());
+
+            System.out.println("ITEM_RESTAURANT_ID = " + requiredItemDetails.getRestaurantId());
+            System.out.println("CART_RESTAURANT_ID = " + cart.getRestaurantId());
+
 
             if (!Objects.equals(cart.getRestaurantId(), requiredItemDetails.getRestaurantId())) {
 
@@ -79,12 +88,15 @@ public class CartItemsService {
 
         RequiredItemDetails requiredItemDetails = webClientBuilder.build()
                 .get()
-                .uri("http://restaurant-service/api/restaurant/getItemDetails?itemId=" + itemId)
+                .uri("lb://RESTAURANT-SERVICE/api/menu-item/{itemId}", itemId)
+                .header("X-Role", "USER")
                 .retrieve()
                 .bodyToMono(RequiredItemDetails.class)
                 .block();
 
-        if (requiredItemDetails == null) throw new CartItemNotFoundException("Item details not found");
+        if (requiredItemDetails == null) {
+            throw new CartItemNotFoundException("Item details not found");
+        }
 
         return requiredItemDetails;
     }
@@ -171,5 +183,52 @@ public class CartItemsService {
     public void deleteByCartId(Cart cart) {
 
         cartItemRepository.deleteByCart(cart);
+    }
+
+    @Transactional
+    public void deleteCartItem(Long cartItemId, Long userId) {
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+
+        Cart cart = cartRepository.findById(cartItem.getCart().getId())
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        if (!cart.getUserId().equals(userId)) {
+            throw new IllegalAccessException("You don't have permission to delete this item");
+        }
+
+        cartItemRepository.deleteByCart(cart);
+
+        // Recalculate cart total
+        updateCartTotal(cart.getId());
+    }
+
+    private void updateCartTotal(Long cartId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        List<CartItem> items = cartItemRepository.findByCartId(cartId);
+
+        BigDecimal total = items.stream()
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotalAmount(total);
+        cartRepository.save(cart);
+    }
+
+    @Transactional
+    public void clearCart(Long cartId, Long userId) {
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        if (!cart.getUserId().equals(userId)) {
+            throw new IllegalAccessException("You don't have permission to clear this cart");
+        }
+
+        cartItemRepository.deleteByCart(cart);
+        cart.setTotalAmount(BigDecimal.ZERO);
+        cartRepository.save(cart);
     }
 }

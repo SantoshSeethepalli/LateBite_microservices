@@ -23,20 +23,17 @@ public class CartItemController {
             @RequestParam(defaultValue = "true") Boolean increaseQuantity) {
 
         if (!role.equals("USER")) {
+
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .build();
         }
 
-        if (request.getUserId().equals(userId)) {
-
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
+        if (request.getUserId() == null || !request.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         Cart response = cartItemsService.updateItemInCart(request, increaseQuantity);
-
         return ResponseEntity.ok(response);
     }
 
@@ -53,4 +50,32 @@ public class CartItemController {
 //
 //            cartItemsService.updateItemQuantity(cartItemId, increaseQuantity);
 //    }
+
+    @DeleteMapping("/{cartItemId}")
+    public ResponseEntity<String> deleteCartItem(
+            @PathVariable Long cartItemId,
+            @RequestHeader("X-Ref-Id") Long userId,
+            @RequestHeader("X-Role") String role) {
+
+        if (!role.equals("USER")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        cartItemsService.deleteCartItem(cartItemId, userId);
+        return ResponseEntity.ok("Item removed from cart");
+    }
+
+    @DeleteMapping("/clear/{cartId}")
+    public ResponseEntity<String> clearCart(
+            @PathVariable Long cartId,
+            @RequestHeader("X-Ref-Id") Long userId,
+            @RequestHeader("X-Role") String role) {
+
+        if (!role.equals("USER")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        cartItemsService.clearCart(cartId, userId);
+        return ResponseEntity.ok("Cart cleared");
+    }
 }

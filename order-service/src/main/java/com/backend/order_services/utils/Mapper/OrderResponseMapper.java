@@ -47,7 +47,7 @@ public class OrderResponseMapper {
                 .build();
     }
 
-    public static Order toOrder(CartDTO cart, BigDecimal utrNumber) {
+    public static Order toOrder(CartDTO cart, String utrNumber) {
 
         return Order.builder()
                 .userId(cart.getUserId())

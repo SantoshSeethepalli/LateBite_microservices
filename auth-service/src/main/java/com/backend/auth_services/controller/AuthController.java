@@ -9,6 +9,7 @@ import com.backend.auth_services.utils.dtos.otp.request.*;
 import com.backend.auth_services.utils.dtos.otp.resposne.*;
 import com.backend.auth_services.utils.dtos.renew.*;
 
+import com.backend.auth_services.utils.dtos.restaurant_handling.SaveRestaurantRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -52,9 +53,16 @@ public class AuthController {
         return ResponseEntity.ok().body(service.logout(req));
     }
 
-    @PostMapping("/admin/login")
+    // Secret admin endpoint - password-based authentication
+    @PostMapping("/admin/secret-login")
     public ResponseEntity<VerifyOtpResponse> adminLogin(@RequestBody AdminLoginRequest req) {
         return ResponseEntity.ok(service.adminLogin(req));
+    }
+
+    @PostMapping("/admin/restaurant/create")
+    public ResponseEntity<?> createRestaurant(@RequestBody SaveRestaurantRequest saveRestaurantRequest) {
+
+        return ResponseEntity.ok().body(service.createRestaurant(saveRestaurantRequest));
     }
 
 }

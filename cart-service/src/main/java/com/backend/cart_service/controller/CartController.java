@@ -15,12 +15,11 @@ public class CartController {
 
     private final CartService cartService;
 
-    @GetMapping("/getCartDetails/cartId")
+    @GetMapping("/{cartId}")
     public ResponseEntity<CartDetailsResponse> getCartDetails(
             @RequestHeader("X-Ref-Id") Long userId,
             @RequestHeader("X-Role") String role,
-            @RequestParam Long cartId
-    ) {
+            @PathVariable Long cartId) {
 
         if (!role.equals("USER")) {
             return ResponseEntity
@@ -29,8 +28,22 @@ public class CartController {
         }
 
         CartDetailsResponse response = cartService.getCompleteCartDetails(cartId, userId);
-        cartService.deleteCart(cartId);
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{cartId}")
+    public ResponseEntity<Void> deleteCart(
+            @RequestHeader("X-Ref-Id") Long userId,
+            @RequestHeader("X-Role") String role,
+            @PathVariable Long cartId) {
+
+        if (!role.equals("USER")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        cartService.deleteCart(cartId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

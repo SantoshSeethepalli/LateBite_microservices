@@ -29,9 +29,11 @@ public class Restaurant {
     @Column(nullable = false, unique = true)
     private String phoneNumber;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @DefaultValue("CLOSED")
-    private OperatingStatus operatingStatus;
+    private OperatingStatus operatingStatus = OperatingStatus.CLOSED;
+
 
     @Column(nullable = false, unique = true)
     private String upiId;

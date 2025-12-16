@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 public class RequiredItemDetails {
 
     private Long restaurantId;
+    private String itemPhoto;
     private String itemName;
     private String description;
     private BigDecimal unitPrice;

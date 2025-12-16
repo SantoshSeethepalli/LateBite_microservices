@@ -23,12 +23,14 @@ public class TwilioSmsProvider implements SmsProvider {
     @Override
     public void sendSms(String to, String body) {
 
-        Twilio.init(sid, token);
+//        Twilio.init(sid, token);
 
-        Message.creator(
-                new com.twilio.type.PhoneNumber(to),
-                new com.twilio.type.PhoneNumber(from),
-                body
-        ).create();
+//        Message.creator(
+//                new com.twilio.type.PhoneNumber(to),
+//                new com.twilio.type.PhoneNumber(from),
+//                body
+//        ).create();
+
+        System.out.println(body);
     }
 }

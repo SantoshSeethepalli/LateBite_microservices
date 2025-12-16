@@ -1,5 +1,6 @@
 package com.backend.restaurant_service.controller;
 
+import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.service.RestaurantService;
 import com.backend.restaurant_service.utils.dto.CreateRestaurantRequest;
 import com.backend.restaurant_service.utils.dto.RestaurantUpdateRequest;
@@ -86,5 +87,28 @@ public class RestaurantController {
         return ResponseEntity.ok("Deleted");
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<Restaurant> getRestaurantProfile(
+            @RequestHeader("X-Ref-Id") Long restaurantId,
+            @RequestHeader("X-Role") String role) {
 
+        if (!role.equals("RESTAURANT")) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Restaurant restaurant = restaurantService.getRestaurantById(restaurantId);
+        return ResponseEntity.ok(restaurant);
+    }
+
+    @PatchMapping("/toggle-operating-status")
+    public ResponseEntity<String> toggleOperatingStatus(
+            @RequestHeader("X-Ref-Id") Long restaurantId,
+            @RequestHeader("X-Role") String role) {
+
+        if (!role.equals("RESTAURANT")) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok().body(restaurantService.toggleOperatingStatus(restaurantId));
+    }
 }

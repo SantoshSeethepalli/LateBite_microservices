@@ -1,27 +1,24 @@
 package com.backend.api_gateway.security;
 
 import com.backend.api_gateway.utils.JwtUtil;
-import com.backend.api_gateway.utils.dtos.TokenRenewResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.lang.NonNull;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.servlet.function.HandlerFilterFunction;
-import org.springframework.web.servlet.function.HandlerFunction;
-import org.springframework.web.servlet.function.ServerRequest;
-import org.springframework.web.servlet.function.ServerResponse;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
-import java.util.Map;
 import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, ServerResponse> {
+public class JwtAuthFilter implements GlobalFilter {
 
     private final JwtUtil jwtUtil;
-    private final WebClient.Builder webClientBuilder;
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/auth/send-otp",
@@ -29,7 +26,7 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
             "/auth/complete-profile",
             "/auth/renew-refresh",
             "/auth/logout",
-            "/auth/admin/login",
+            "/auth/admin/secret-login",
             "/swagger-ui.html",
             "/api-docs"
     );
@@ -39,22 +36,23 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
     }
 
     @Override
-    public @NonNull ServerResponse filter(
-            @NonNull ServerRequest request,
-            @NonNull HandlerFunction<ServerResponse> next
-    ) throws Exception {
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
-        String path = request.uri().getPath();
-        if (isPublic(path)) return next.handle(request);
-
-        String auth = request.headers().firstHeader("authorization");
-        if (auth == null) auth = request.headers().firstHeader("Authorization");
-
-        if (auth == null || !auth.startsWith("Bearer ")) {
-            return ServerResponse.status(401).body("Missing or invalid Authorization header");
+        if (exchange.getRequest().getMethod().name().equals("OPTIONS")) {
+            exchange.getResponse().setStatusCode(HttpStatus.OK);
+            return chain.filter(exchange);
         }
 
-        System.out.println("HEADERS = " + request.headers().asHttpHeaders());
+        String path = exchange.getRequest().getURI().getPath();
+        if (isPublic(path)) {
+            return chain.filter(exchange);
+        }
+
+        String auth = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (auth == null || !auth.startsWith("Bearer ")) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
 
         String token = auth.substring(7);
 
@@ -64,77 +62,22 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
             Object refClaim = claims.get("refId");
             String ref = refClaim == null ? "-1" : refClaim.toString();
 
-            ServerRequest mutated = ServerRequest.from(request)
+            ServerHttpRequest mutated = exchange.getRequest()
+                    .mutate()
                     .header("X-User-Id", claims.getSubject())
                     .header("X-Ref-Id", ref)
                     .header("X-Role", claims.get("role").toString())
                     .header("X-Phone", claims.get("phone").toString())
                     .build();
 
-            return next.handle(mutated);
+            return chain.filter(exchange.mutate().request(mutated).build());
 
-        } catch (ExpiredJwtException ex) {
-
-            String refresh = request.headers().firstHeader("X-Refresh-Token");
-            Long authUserId = Long.parseLong(ex.getClaims().getSubject());
-
-            if (refresh == null) {
-                return forceLogout(authUserId);
-            }
-
-            TokenRenewResponse response = webClientBuilder
-                    .build()
-                    .post()
-                    .uri("lb://AUTH-SERVICE/auth/renew-refresh")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of(
-                            "authUserId", authUserId,
-                            "refreshToken", refresh
-                    ))
-                    .retrieve()
-                    .bodyToMono(TokenRenewResponse.class)
-                    .onErrorResume(err -> null)
-                    .block();
-
-            if (response == null || response.getAccessToken() == null)
-                return forceLogout(authUserId);
-
-            String newAccess = response.getAccessToken();
-            var newClaims = jwtUtil.validateToken(newAccess);
-
-            Object newRefClaim = newClaims.get("refId");
-            String newRef = newRefClaim == null ? "-1" : newRefClaim.toString();
-
-            ServerRequest mutated = ServerRequest.from(request)
-                    .header("X-User-Id", newClaims.getSubject())
-                    .header("X-Ref-Id", newRef)
-                    .header("X-Role", newClaims.get("role").toString())
-                    .header("X-Phone", newClaims.get("phone").toString())
-                    .header("X-New-Access-Token", newAccess)
-                    .build();
-
-            return next.handle(mutated);
-
+        } catch (ExpiredJwtException e) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         } catch (Exception e) {
-            return ServerResponse.status(401).body("Invalid or expired token");
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
     }
-
-    private ServerResponse forceLogout(Long authUserId) {
-
-        try {
-            webClientBuilder.build()
-                    .post()
-                    .uri("lb://AUTH-SERVICE/auth/logout")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of("authUserId", authUserId))
-                    .retrieve()
-                    .bodyToMono(Void.class)
-                    .onErrorResume(err -> null)
-                    .block();
-        } catch (Exception ignored) {}
-
-        return ServerResponse.status(401).body("logged_out");
-    }
-
 }

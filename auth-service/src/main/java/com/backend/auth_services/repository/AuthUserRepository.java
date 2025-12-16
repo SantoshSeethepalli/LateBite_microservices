@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
 
     Optional<AuthUser> findByPhoneNumberAndRole(String phone, Role role);
+    Optional<AuthUser> findByRole(Role role);
     boolean existsByPhoneNumber(String adminPhone);
 }

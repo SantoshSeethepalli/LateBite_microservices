@@ -6,6 +6,9 @@ import com.backend.restaurant_service.model.MenuItem;
 import com.backend.restaurant_service.model.Restaurant;
 import com.backend.restaurant_service.repository.MenuItemRepository;
 import com.backend.restaurant_service.repository.RestaurantRepository;
+import com.backend.restaurant_service.utils.dto.Menu.AvailableMenuItems;
+import com.backend.restaurant_service.utils.dto.Menu.CompleteMenuResponse;
+import com.backend.restaurant_service.utils.dto.Menu.GetItemResponse;
 import com.backend.restaurant_service.utils.exceptions.exps.IllegalRestaurantAccessException;
 import com.backend.restaurant_service.utils.exceptions.exps.MenuItemNotFoundException;
 import com.backend.restaurant_service.utils.exceptions.exps.RestaurantNotFoundException;
@@ -13,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,5 +57,28 @@ public class MenuItemService {
         menuItem.setUpdatedAt(LocalDateTime.now());
 
         menuItemRepository.save(menuItem);
+    }
+
+    public List<AvailableMenuItems> getAvailableItemsOfRestaurantToUser(Long restaurantId) {
+
+        return menuItemRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
+                .stream()
+                .map(AvailableMenuItems::from)
+                .toList();
+    }
+
+    public List<CompleteMenuResponse> getMenuOfRestaurant(Long restaurantId) {
+
+        return menuItemRepository.findByRestaurantId(restaurantId)
+                .stream()
+                .map(CompleteMenuResponse::from)
+                .toList();
+    }
+
+    public GetItemResponse getItemDetails(Long menuItemId) {
+
+        return menuItemRepository.findById(menuItemId)
+                .map(GetItemResponse::from)
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
     }
 }

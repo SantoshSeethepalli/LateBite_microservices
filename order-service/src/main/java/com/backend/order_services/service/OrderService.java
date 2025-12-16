@@ -4,19 +4,17 @@ import com.backend.order_services.utils.dto.GetAllOrdersDtos.OrderResponse;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.CartDTO;
 import com.backend.order_services.utils.dto.PlaceOrderDtos.PlaceOrderRequest;
 import com.backend.order_services.utils.Mapper.OrderResponseMapper;
-import com.backend.order_services.utils.exceptions.exps.AccessDeniedException;
-import com.backend.order_services.utils.exceptions.exps.CartNotFoundException;
-import com.backend.order_services.utils.exceptions.exps.OrderNotFoundException;
-import com.backend.order_services.utils.exceptions.exps.UnauthorizedOrderUpdateException;
+import com.backend.order_services.utils.dto.statistics.OrderStatistics;
+import com.backend.order_services.utils.dto.statistics.RestaurantOrderStats;
+import com.backend.order_services.utils.exceptions.exps.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,28 +31,35 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final StatisticsService statisticsService;
 
-    private final Long averageItemPreparingTime = 7L;
+    private final Long averageItemPreparingTime = 5L; // in minutes
 
     private final WebClient.Builder webClientBuilder;
 
     @Transactional
     public void placeOrder(Long userId, PlaceOrderRequest placeOrderRequest) {
 
-        CartDTO cart = webClientBuilder.build()
-                .get()
-                .uri("http://cart-service/api/cart/getCartDetails/cartId?cartId=" + placeOrderRequest.getCartId())
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new CartNotFoundException("Cart not found or invalid cart ID")))
-                .onStatus(HttpStatusCode::is5xxServerError,
-                        response -> Mono.error(new RuntimeException("Cart service unavailable")))
-                .bodyToMono(CartDTO.class)
-                .block();
+        String utr = placeOrderRequest.getUtrNumber();
 
-        if(!cart.getUserId().equals(userId)) throw new AccessDeniedException("You can't handle this cart");
+        if (utr == null || utr.isBlank()) {
+            throw new UtrNumberNotFound("UTR number is required");
+        }
 
-        if(cart == null || cart.getOrderedItems().isEmpty()) throw new CartNotFoundException("Cart is empty or not found");
+        // allow only digits (UPI UTRs are numeric)
+        if (!utr.matches("\\d+")) {
+            throw new UtrNumberNotValid("Invalid UTR number. Must contain only digits.");
+        }
+
+        CartDTO cart = getCartDetails(userId, placeOrderRequest);
+
+        if(!cart.getUserId().equals(userId)) {
+            throw new AccessDeniedException("You can't handle this cart");
+        }
+
+        if(cart == null || cart.getOrderedItems().isEmpty()) {
+            throw new CartNotFoundException("Cart is empty or not found");
+        }
 
         Order savedOrder =
                 orderRepository.saveAndFlush(
@@ -66,6 +71,48 @@ public class OrderService {
                 .toList();
 
         orderItemRepository.saveAll(orderItems);
+
+        deleteCart(placeOrderRequest.getCartId(), userId);
+    }
+
+    private CartDTO getCartDetails(Long userId, PlaceOrderRequest placeOrderRequest) {
+
+        return webClientBuilder.build()
+                .get()
+                .uri("http://cart-service/api/cart/{cartId}", placeOrderRequest.getCartId())
+                .header("X-Ref-Id", String.valueOf(userId))
+                .header("X-Role", "USER")
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        response -> Mono.error(new CartNotFoundException("Cart not found or invalid cart ID")))
+                .onStatus(HttpStatusCode::is5xxServerError,
+                        response -> Mono.error(new RuntimeException("Cart service unavailable")))
+                .bodyToMono(CartDTO.class)
+                .block();
+    }
+
+    private void deleteCart(Long cartId, Long userId) {
+
+        webClientBuilder.build()
+                .delete()
+                .uri("http://cart-service/api/cart/{cartId}", cartId)
+                .header("X-Ref-Id", String.valueOf(userId))
+                .header("X-Role", "USER")
+                .retrieve()
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        response -> Mono.error(
+                                new CartNotFoundException("Cart not found or already deleted")
+                        )
+                )
+                .onStatus(
+                        HttpStatusCode::is5xxServerError,
+                        response -> Mono.error(
+                                new RuntimeException("Cart service unavailable")
+                        )
+                )
+                .toBodilessEntity()
+                .block();
     }
 
     @Transactional(readOnly = true)
@@ -181,4 +228,71 @@ public class OrderService {
 
         return totalItemsInQueue * averageItemPreparingTime;
     }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new RuntimeException("Order not found with ID: " + orderId)
+                );
+
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+
+        return OrderResponse.mapToOrderResponse(order, items);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<Order> getActiveOrdersByUserId(Long userId) {
+
+        List<OrderStatus> activeStatuses = Arrays.asList(
+                OrderStatus.AWAITING_VERIFICATION,
+                OrderStatus.CONFIRMED_AND_PREPARING,
+                OrderStatus.READY_TO_PICKUP
+        );
+
+        return orderRepository.findByUserIdAndOrderStatusIn(userId, activeStatuses);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderStatistics getOrderStatistics() {
+        long totalOrders = orderRepository.count();
+        long activeOrders = orderRepository.countByOrderStatusIn(Arrays.asList(
+                OrderStatus.AWAITING_VERIFICATION,
+                OrderStatus.CONFIRMED_AND_PREPARING,
+                OrderStatus.READY_TO_PICKUP,
+                OrderStatus.DELIVERED
+        ));
+        long completedOrders = orderRepository.countByOrderStatus(OrderStatus.DELIVERED);
+        long cancelledOrders = orderRepository.countByOrderStatus(OrderStatus.CANCELLED);
+
+        return new OrderStatistics(totalOrders, activeOrders, completedOrders, cancelledOrders);
+    }
+
+    @Transactional(readOnly = true)
+    public RestaurantOrderStats getRestaurantStatistics(Long restaurantId) {
+
+        Long totalOrders = statisticsService.getTotalOrderOfRestaurant(restaurantId);
+        Long ordersDelivered = statisticsService.getCountOfDeliveredOrderOfRestaurant(restaurantId);
+        Long ordersCancelled = statisticsService.getCountOfCancelledOrdersOfRestaurant(restaurantId);
+
+        BigDecimal overallRevenue = statisticsService.getOverallRevenue(restaurantId);
+        BigDecimal lastWeekRevenue = statisticsService.getLastWeekRevenue(restaurantId);
+        BigDecimal lastMonthRevenue = statisticsService.getLastMonthRevenue(restaurantId);
+        BigDecimal lastYearRevenue = statisticsService.getLastYearRevenue(restaurantId);
+
+        return new RestaurantOrderStats(
+                totalOrders,
+                ordersDelivered,
+                ordersCancelled,
+                overallRevenue,
+                lastWeekRevenue,
+                lastMonthRevenue,
+                lastYearRevenue
+        );
+    }
+
+
+
 }
