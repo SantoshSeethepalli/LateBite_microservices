@@ -40,7 +40,9 @@ public class CartItemsService {
             );
         } else {
             cart = cartRepository.findById(itemToCartItemRequest.getCartId())
-                    .orElseThrow(() -> new RuntimeException("Cart not found"));
+                    .orElseGet(() -> cartRepository.save(
+                            CartMapper.createNewCart(itemToCartItemRequest)
+                    ));
         }
 
         if (!cart.getRestaurantId().equals(itemToCartItemRequest.getRestaurantId()))
@@ -54,10 +56,6 @@ public class CartItemsService {
         if (existingCartItem == null) {
 
             RequiredItemDetails requiredItemDetails = fetchItemDetails(itemToCartItemRequest.getItemId());
-
-            System.out.println("ITEM_RESTAURANT_ID = " + requiredItemDetails.getRestaurantId());
-            System.out.println("CART_RESTAURANT_ID = " + cart.getRestaurantId());
-
 
             if (!Objects.equals(cart.getRestaurantId(), requiredItemDetails.getRestaurantId())) {
 

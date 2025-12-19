@@ -30,7 +30,8 @@ public class CartItemController {
         }
 
         if (request.getUserId() == null || !request.getUserId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+            request.setUserId(userId);
         }
 
         Cart response = cartItemsService.updateItemInCart(request, increaseQuantity);
