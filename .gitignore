@@ -1,4 +1,3 @@
-HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -6,31 +5,27 @@ target/
 
 ### env file
 .env
+*.env
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+### Docker ###
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.*.yml
+Dockerfile
+**/Dockerfile
+.docker/
+docker/
+*.log
+*.pid
+
+### Docker volumes & artifacts ###
+/data/
+/postgres-data/
+/redis-data/
+/tmp/
 
 ### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/

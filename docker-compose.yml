@@ -1,0 +1,169 @@
+services:
+
+  discovery-server:
+    image: discovery-server
+    ports:
+      - "8765:8765"
+    environment:
+      APP_NAME: "discovery-server"
+      SERVER_PORT: "8765"
+      EUREKA_HOST: "localhost"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: common_user
+      POSTGRES_PASSWORD: 123
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U common_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  user-service:
+    image: user-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8030"
+      APP_NAME: "USER-SERVICE"
+      DB_URL: "jdbc:postgresql://postgres:5432/latebite_user_service"
+      DB_USER: "common_user"
+      DB_PASS: "123"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  auth-service:
+    image: auth-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8005"
+      APP_NAME: "auth-service"
+      DB_URL: "jdbc:postgresql://postgres:5432/latebite_auth_service"
+      DB_USER: "common_user"
+      DB_PASS: "123"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      JWT_SECRET: "AkkkPakkkKarveePakkDammmDiimmmDishhhh"
+      JWT_ACCESS_EXP_MS: "900000"
+      JWT_REFRESH_EXP_DAYS: "14"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+      USER_SERVICE_URL: "lb://user-service"
+      RESTAURANT_SERVICE_URL: "lb://restaurant-service"
+      TWILIO_SID: "AC4dc12ed3c78b1674cea4d60b85ef0bce"
+      TWILIO_TOKEN: "3dddbb2e70022f8a8c968fd0d4ba5cb1"
+      TWILIO_FROM: "+19523950211"
+      SMS_PROVIDER: "twilio"
+      ADMIN_PHONE: "9948037987"
+      ADMIN_PASSWORD: "admin@latebite2025"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+  payment-service:
+    image: payment-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8020"
+      APP_NAME: "PAYMENT-SERVICE"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  restaurant-service:
+    image: restaurant-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8025"
+      APP_NAME: "RESTAURANT-SERVICE"
+      DB_URL: "jdbc:postgresql://postgres:5432/latebite_restaurant_service"
+      DB_USER: "common_user"
+      DB_PASS: "123"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  cart-service:
+    image: cart-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8010"
+      APP_NAME: "CART-SERVICE"
+      DB_URL: "jdbc:postgresql://postgres:5432/latebite_cart_service"
+      DB_USER: "common_user"
+      DB_PASS: "123"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      restaurant-service:
+        condition: service_started
+
+  order-service:
+    image: order-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8015"
+      APP_NAME: "ORDER-SERVICE"
+      DB_URL: "jdbc:postgresql://postgres:5432/latebite_order_service"
+      DB_USER: "common_user"
+      DB_PASS: "123"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      cart-service:
+        condition: service_started
+
+  api-gateway:
+    image: api-gateway
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8080"
+      APP_NAME: "api-gateway"
+      JWT_SECRET: "AkkkPakkkKarveePakkDammmDiimmmDishhhh"
+      EUREKA_URL: "http://discovery-server:8765/eureka"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+volumes:
+  redis-data:
