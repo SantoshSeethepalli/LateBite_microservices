@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "t_auth_user")
+@Table(
+    name = "t_auth_user",
+    uniqueConstraints = {
+            @UniqueConstraint(columnNames = {"phoneNumber", "role"})
+    }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

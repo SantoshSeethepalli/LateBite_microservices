@@ -10,6 +10,7 @@ import com.backend.auth_services.utils.dtos.otp.resposne.*;
 import com.backend.auth_services.utils.dtos.renew.*;
 
 import com.backend.auth_services.utils.dtos.restaurant_handling.SaveRestaurantRequest;
+import com.backend.auth_services.utils.dtos.restaurant_handling.SaveRestaurantResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,9 +61,8 @@ public class AuthController {
     }
 
     @PostMapping("/admin/restaurant/create")
-    public ResponseEntity<?> createRestaurant(@RequestBody SaveRestaurantRequest saveRestaurantRequest) {
+    public ResponseEntity<SaveRestaurantResponse> createRestaurant(@RequestBody SaveRestaurantRequest saveRestaurantRequest) {
 
         return ResponseEntity.ok().body(service.createRestaurant(saveRestaurantRequest));
     }
-
 }

@@ -18,6 +18,7 @@ import com.backend.auth_services.utils.dtos.renew.*;
 import com.backend.auth_services.utils.exceptions.CustomRuntimeException;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,6 +29,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -62,12 +64,22 @@ public class AuthFlowService {
         String phone = req.getPhone();
         Role role = Role.valueOf(req.getRole());
 
-        authRepository.findByPhoneNumberAndRole(phone, role)
-                .orElseGet(() -> authRepository.save(AuthUser.builder()
+        Optional<AuthUser> existingUser = authRepository.findFirstByPhoneNumberAndRole(phone, role);
+
+        if(existingUser.isEmpty()) {
+            try {
+
+                authRepository.save(AuthUser.builder()
                         .phoneNumber(phone)
                         .role(role)
                         .status(Status.NEW)
-                        .build()));
+                        .build());
+
+            } catch (DataIntegrityViolationException ignored) {
+                // Enter here if 2ppl try to enter same {ph.no and role}
+            }
+        }
+
 
         String otp = otpService.generateOtp(phone, role.name());
         smsService.sendSms("+91" + phone, "Your OTP is: " + otp);
@@ -88,7 +100,7 @@ public class AuthFlowService {
         if (!otpService.verifyOtp(phone, role.name(), otp))
             throw new CustomRuntimeException("invalid_otp", HttpStatus.UNAUTHORIZED);
 
-        AuthUser user = authRepository.findByPhoneNumberAndRole(phone, role)
+        AuthUser user = authRepository.findFirstByPhoneNumberAndRole(phone, role)
                 .orElseThrow(() ->
                         new CustomRuntimeException("auth_user_not_found", HttpStatus.NOT_FOUND)
                 );
@@ -294,7 +306,7 @@ public class AuthFlowService {
         String phone = req.getPhone();
 
         // 1. Create Auth User first (role = RESTAURANT)
-        AuthUser user = authRepository.findByPhoneNumberAndRole(phone, Role.RESTAURANT)
+        AuthUser user = authRepository.findFirstByPhoneNumberAndRole(phone, Role.RESTAURANT)
                 .orElseGet(() -> authRepository.save(
                         AuthUser.builder()
                                 .phoneNumber(phone)

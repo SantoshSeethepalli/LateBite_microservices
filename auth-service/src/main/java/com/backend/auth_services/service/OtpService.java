@@ -19,7 +19,9 @@ public class OtpService {
     public String generateOtp(String phone, String role) {
 
         String key = "otp:" + role + ":" + phone;
-        String otp = String.format("%06d", new Random().nextInt(999999));
+//        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        String otp = "123456"; // dummyOtpCreatedForLoadTesting
 
         redis.opsForValue().set(key, otp, Duration.ofMinutes(5));
 
